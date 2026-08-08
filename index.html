@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Call Desk CRM</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg:#08111d;
+      --bg2:#0f1830;
+      --panel:#101a33;
+      --panel2:#16213d;
+      --line:rgba(255,255,255,.10);
+      --text:#f3f7ff;
+      --muted:#9fb0d1;
+      --gold:#f5c542;
+      --green:#25d366;
+      --blue:#60a5fa;
+      --red:#ff6476;
+      --orange:#ff9f43;
+      --purple:#b58cff;
+      --shadow:0 16px 40px rgba(0,0,0,.28);
+      --radius:22px;
+      --radius2:16px;
+      --base:17px;
+      --action-h:76px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(245,197,66,.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(96,165,250,.10), transparent 24%),
+        linear-gradient(180deg, #060b13 0%, var(--bg) 45%, #060910 100%);
+      color:var(--text);
+      font-size:var(--base);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    button,input,select,textarea{font:inherit}
+    a{color:inherit}
+    .hidden{display:none !important}
+    .wrap{max-width:1400px; margin:0 auto; padding:14px 12px calc(var(--action-h) + 18px)}
+    .glass{
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(12px);
+      border-radius:var(--radius);
+    }
+    .topbar{
+      position:sticky; top:0; z-index:80;
+      display:flex; gap:12px; justify-content:space-between; align-items:center;
+      padding:12px 14px; margin-bottom:14px;
+    }
+    .brand{display:flex; align-items:center; gap:12px; min-width:0}
+    .logo{
+      width:52px; height:52px; border-radius:18px;
+      display:grid; place-items:center;
+      background:linear-gradient(135deg, var(--gold), #fff0a3);
+      color:#1b1600; font-weight:900; font-size:24px;
+      box-shadow:0 10px 24px rgba(245,197,66,.18);
+      flex:0 0 auto;
+    }
+    .brand-text{min-width:0}
+    .title{font-size:20px; line-height:1.1; font-weight:900; letter-spacing:.01em}
+    .sub{font-size:13px; color:var(--muted); margin-top:4px; line-height:1.35}
+    .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .btn{
+      border:0; cursor:pointer; text-decoration:none;
+      border-radius:16px; padding:14px 16px;
+      font-weight:800; color:#07111e; background:#fff;
+      display:inline-flex; gap:10px; align-items:center; justify-content:center;
+      transition:transform .16s ease, opacity .16s ease, background .16s ease;
+      min-height:48px;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:disabled{opacity:.45; cursor:not-allowed; transform:none}
+    .btn.small{padding:10px 12px; min-height:42px; border-radius:14px; font-size:14px}
+    .btn.primary{background:linear-gradient(135deg, var(--gold), #ffe58f)}
+    .btn.green{background:linear-gradient(135deg, #2fe07b, #76f1ab)}
+    .btn.blue{background:linear-gradient(135deg, #73b3ff, #a9d5ff)}
+    .btn.red{background:linear-gradient(135deg, #ff7b8b, #ff9cab)}
+    .btn.dark{background:#16213d; color:var(--text); border:1px solid var(--line)}
+    .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--line)}
+    .btn.full{width:100%}
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:9px 12px; border-radius:999px;
+      background:rgba(255,255,255,.05); border:1px solid var(--line);
+      color:var(--muted); font-size:13px; white-space:nowrap;
+    }
+    .chip strong{color:var(--text)}
+    .grid{display:grid; gap:14px}
+    .layout{
+      display:grid;
+      grid-template-columns: 320px minmax(0,1fr) 340px;
+      gap:14px;
+      align-items:start;
+    }
+    .panel{padding:14px}
+    .section{
+      padding:14px; margin-bottom:14px;
+    }
+    .section-title{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      font-size:13px; text-transform:uppercase; letter-spacing:.08em;
+      color:#b8c7e8; margin-bottom:12px;
+    }
+    .section-title .mini{font-size:12px; letter-spacing:0; text-transform:none; color:var(--muted)}
+    .row{display:grid; gap:10px}
+    .two{grid-template-columns:1fr 1fr}
+    .three{grid-template-columns:1fr 1fr 1fr}
+    .label{font-size:13px; color:var(--muted); margin:11px 0 8px}
+    input[type="text"], input[type="password"], input[type="email"], select, textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:#0b1324;
+      color:var(--text);
+      padding:14px 14px;
+      outline:none;
+    }
+    textarea{min-height:108px; resize:vertical}
+    input::placeholder, textarea::placeholder{color:#7e8fb0}
+    .notice{
+      font-size:13px; line-height:1.55;
+      padding:12px 14px;
+      background:rgba(96,165,250,.10);
+      border:1px solid rgba(96,165,250,.18);
+      border-radius:16px;
+      color:#deebff;
+    }
+    .danger{
+      background:rgba(255,100,118,.10);
+      border-color:rgba(255,100,118,.18);
+      color:#ffdfe3;
+    }
+    .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+    .stat{
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+    }
+    .stat .n{font-size:26px; line-height:1; font-weight:900}
+    .stat .l{font-size:12px; color:var(--muted); margin-top:5px}
+    .progress{
+      width:100%; height:12px; border-radius:999px; overflow:hidden;
+      background:#0b1324; border:1px solid var(--line);
+    }
+    .bar{height:100%; width:0%; background:linear-gradient(90deg, var(--green), #79f0ac)}
+    .call-card{
+      background:linear-gradient(180deg, rgba(245,197,66,.10), rgba(255,255,255,.04));
+      border:1px solid rgba(245,197,66,.20);
+      border-radius:24px;
+      padding:16px;
+    }
+    .split{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .name{font-size:28px; line-height:1.1; font-weight:900; margin-top:2px}
+    .phone{
+      display:inline-flex; gap:10px; align-items:center;
+      font-size:30px; font-weight:900; text-decoration:none;
+      color:#fff8d0; margin-top:10px; word-break:break-word;
+    }
+    .pill-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+    .data{
+      display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;
+    }
+    .kv{
+      padding:12px; border-radius:16px;
+      background:rgba(255,255,255,.05); border:1px solid var(--line);
+      min-width:0;
+    }
+    .kv .k{font-size:12px; color:var(--muted); margin-bottom:4px}
+    .kv .v{font-size:15px; font-weight:700; word-break:break-word; line-height:1.35}
+    .kv.full{grid-column:1/-1}
+    .actions{
+      display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;
+    }
+    .actions .btn{min-height:52px; font-size:16px}
+    .tabs{
+      display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;
+    }
+    .tab{
+      padding:11px 13px;
+      border-radius:999px;
+      background:#0b1324;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      user-select:none;
+      font-size:13px;
+      font-weight:800;
+    }
+    .tab.active{
+      background:linear-gradient(135deg, rgba(245,197,66,.96), rgba(255,229,143,.96));
+      color:#1b1600;
+    }
+    .list{
+      max-height:calc(100vh - 320px);
+      overflow:auto;
+      padding-right:4px;
+    }
+    .record{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      padding:12px; border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      margin-bottom:10px;
+      cursor:pointer;
+    }
+    .record.active{outline:2px solid rgba(245,197,66,.34); background:rgba(245,197,66,.08)}
+    .record .nm{font-size:15px; font-weight:900; line-height:1.25}
+    .record .ph{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.3}
+    .badge{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:72px;
+      padding:6px 10px; border-radius:999px;
+      background:#0b1324; border:1px solid var(--line);
+      color:var(--muted); font-size:12px; font-weight:800;
+      text-align:center;
+    }
+    .b-interest{color:#63f0a0}
+    .b-callback{color:#7cc7ff}
+    .b-no{color:#ff8693}
+    .b-busy{color:#ffbc7a}
+    .b-dropped{color:#d9c0ff}
+    .b-pending{color:#f5d873}
+    .collapser{
+      width:100%;
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      padding:12px 0;
+      background:transparent; border:0; color:var(--text); cursor:pointer; text-align:left;
+      font-weight:900;
+    }
+    .collapser small{display:block; color:var(--muted); font-weight:600; margin-top:4px}
+    .caret{transition:transform .18s ease}
+    .collapsed .caret{transform:rotate(-90deg)}
+    .collapsed + .collapse-body{display:none}
+    .table-wrap{overflow:auto; border-radius:18px; border:1px solid var(--line)}
+    table{width:100%; min-width:980px; border-collapse:collapse; background:rgba(255,255,255,.03)}
+    th,td{
+      border-bottom:1px solid rgba(255,255,255,.08);
+      padding:11px 12px;
+      font-size:13px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{position:sticky; top:0; z-index:2; background:#0d1630}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .hidden-pane{display:none !important}
+    .sticky-actions{
+      position:sticky;
+      bottom:0;
+      background:linear-gradient(180deg, rgba(8,17,29,0), rgba(8,17,29,.88) 30%, rgba(8,17,29,.98));
+      padding:10px 0 0;
+      z-index:20;
+    }
+    .bottom-nav{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:90;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+      background:linear-gradient(180deg, rgba(6,11,19,0), rgba(6,11,19,.8) 20%, rgba(6,11,19,.98));
+      backdrop-filter: blur(10px);
+    }
+    .bottom-nav .bar{
+      display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+      background:rgba(16,26,51,.9);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:10px;
+      box-shadow:var(--shadow);
+    }
+    .navbtn{
+      border:0; background:transparent; color:var(--muted);
+      padding:10px 8px; border-radius:16px;
+      display:flex; flex-direction:column; align-items:center; gap:5px;
+      font-size:12px; font-weight:700;
+      cursor:pointer;
+    }
+    .navbtn.active{color:var(--text); background:rgba(245,197,66,.12)}
+    .navbtn span{font-size:18px; line-height:1}
+    .toast{
+      position:fixed; right:14px; bottom:104px; z-index:9999;
+      background:rgba(9,14,25,.96);
+      color:var(--text);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      border-radius:16px;
+      padding:14px 16px;
+      min-width:240px; max-width:360px;
+      display:none;
+    }
+    .toast.show{display:block; animation:pop .18s ease}
+    @keyframes pop{from{transform:translateY(8px);opacity:.2}to{transform:translateY(0);opacity:1}}
+    .login-shell{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:18px 12px;
+    }
+    .login-box{
+      width:100%;
+      max-width:480px;
+      padding:18px;
+    }
+    .login-head{
+      display:flex; align-items:center; gap:12px; margin-bottom:14px
+    }
+    .mini{font-size:12px; color:var(--muted); line-height:1.45}
+    .toggle-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
+    .toggle{
+      padding:10px 12px; border-radius:14px; border:1px solid var(--line);
+      background:#0b1324; color:var(--text); font-size:13px; cursor:pointer; font-weight:800;
+    }
+    .toggle.on{background:rgba(245,197,66,.16); border-color:rgba(245,197,66,.26); color:#fff7ca}
+    .focus-mode .sidebar,
+    .focus-mode .queue-panel,
+    .focus-mode .records-panel,
+    .focus-mode .dashboard-panel,
+    .focus-mode .mapping-panel{display:none !important}
+    .focus-mode .call-panel{grid-column:1/-1}
+    .focus-mode .topbar .sub{display:none}
+    .queue-hide .queue-panel{display:none !important}
+    .stats-hide .dashboard-panel{display:none !important}
+    .mapping-hide .mapping-panel{display:none !important}
+    .records-hide .records-panel{display:none !important}
+    .full-hide .sidebar{display:none !important}
+    @media (max-width: 1180px){
+      .layout{grid-template-columns:1fr}
+      .list{max-height:none}
+      .topbar{position:static}
+      .queue-panel,.sidebar,.records-panel,.dashboard-panel,.mapping-panel{display:block !important}
+    }
+    @media (max-width: 720px){
+      :root{--base:18px; --action-h:82px}
+      .wrap{padding:12px 10px calc(var(--action-h) + 18px)}
+      .title{font-size:18px}
+      .logo{width:48px; height:48px; border-radius:16px; font-size:22px}
+      .topbar{padding:12px}
+      .panel,.section{padding:12px}
+      .name{font-size:24px}
+      .phone{font-size:24px; word-break:break-word}
+      .data{grid-template-columns:1fr}
+      .actions{grid-template-columns:1fr}
+      .stat-grid{grid-template-columns:1fr 1fr}
+      .two,.three{grid-template-columns:1fr}
+      .bottom-nav .bar{grid-template-columns:repeat(4,1fr)}
+      .btn{padding:14px 14px}
+      .btn.small{font-size:13px}
+      .list{max-height:none}
+      .record{padding:12px}
+      table{min-width:820px}
+    }
+    @media (max-width: 420px){
+      .bottom-nav .bar{gap:6px; padding:8px}
+      .navbtn{font-size:11px; padding:8px 4px}
+      .navbtn span{font-size:17px}
+      .stat .n{font-size:22px}
+      .chip{font-size:12px}
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div id="app"></div>
+
+<script>
+(() => {
+  const LS_USERS = "cdcrm_users_v2";
+  const LS_SESSION = "cdcrm_session_v2";
+  const LS_DATA = "cdcrm_data_v2";
+  const LS_UI = "cdcrm_ui_v2";
+
+  const STATUS_OPTIONS = ["Pending","Interested","Not Interested","Callback","Busy","Wrong Number","No Answer","Dropped","Follow Up","Do Not Call","Closed"];
+  const ACTIONS = ["call","wa","save","next"];
+
+  const app = document.getElementById("app");
+  const toast = document.getElementById("toast");
+
+  const state = {
+    users: JSON.parse(localStorage.getItem(LS_USERS) || "{}"),
+    session: JSON.parse(localStorage.getItem(LS_SESSION) || "null"),
+    records: JSON.parse(localStorage.getItem(LS_DATA) || "[]"),
+    ui: Object.assign({
+      loginMode: "login",
+      dashboardOpen: true,
+      queueOpen: true,
+      mappingOpen: true,
+      recordsOpen: true,
+      focusMode: false,
+      activeNav: "call",
+      statusFilter: "All",
+      search: "",
+      currentIndex: 0,
+      columnMap: { name:"", mobile:"", alt:"", address:"", status:"", remarks:"" },
+      parsedRows: [],
+      headers: []
+    }, JSON.parse(localStorage.getItem(LS_UI) || "{}"))
+  };
+
+  function save(){
+    localStorage.setItem(LS_USERS, JSON.stringify(state.users));
+    localStorage.setItem(LS_SESSION, JSON.stringify(state.session));
+    localStorage.setItem(LS_DATA, JSON.stringify(state.records));
+    localStorage.setItem(LS_UI, JSON.stringify(state.ui));
+  }
+
+  function showToast(msg, ms=2200){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(showToast.t);
+    showToast.t = setTimeout(()=>toast.classList.remove("show"), ms);
+  }
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function norm(s){ return String(s ?? "").trim().toLowerCase().replace(/[\s_\-]+/g,""); }
+  function user(){ return state.session ? state.users[state.session.username] : null; }
+  function isLoggedIn(){ return !!user(); }
+
+  function filteredRecords(){
+    let list = state.records.map((r, i) => ({...r, __index: i}));
+    if(state.ui.statusFilter !== "All"){
+      list = list.filter(r => (r.status || "Pending") === state.ui.statusFilter);
+    }
+    if(state.ui.search){
+      const q = state.ui.search.toLowerCase();
+      list = list.filter(r => Object.values(r).join(" ").toLowerCase().includes(q));
+    }
+    return list;
+  }
+
+  function activeListIndex(){
+    const list = filteredRecords();
+    if(!list.length) return -1;
+    if(state.ui.currentIndex >= list.length) state.ui.currentIndex = 0;
+    if(state.ui.currentIndex < 0) state.ui.currentIndex = 0;
+    return state.ui.currentIndex;
+  }
+
+  function activeRecord(){
+    const list = filteredRecords();
+    const idx = activeListIndex();
+    return idx >= 0 ? list[idx] : null;
+  }
+
+  function rawActive(){
+    const a = activeRecord();
+    return a ? state.records[a.__index] : null;
+  }
+
+  function counts(){
+    const c = { total: state.records.length, pending:0, interested:0, callback:0, no:0, dropped:0 };
+    state.records.forEach(r => {
+      const s = r.status || "Pending";
+      if(s === "Pending") c.pending++;
+      if(s === "Interested") c.interested++;
+      if(s === "Callback") c.callback++;
+      if(s === "Not Interested") c.no++;
+      if(s === "Dropped") c.dropped++;
+    });
+    return c;
+  }
+
+  function progress(){
+    const total = state.records.length || 1;
+    const done = state.records.filter(r => (r.status || "Pending") !== "Pending").length;
+    return Math.round((done / total) * 100);
+  }
+
+  function applyAutoDetect(){
+    const headers = state.ui.headers.map(h => ({ raw: h, n: norm(h) }));
+    const find = keys => {
+      const hit = headers.find(h => keys.some(k => h.n.includes(k)));
+      return hit ? hit.raw : "";
+    };
+    state.ui.columnMap.name = find(["name","customer","client","lead","fullname","fullnam"]);
+    state.ui.columnMap.mobile = find(["mobile","phone","contact","number","cell"]);
+    state.ui.columnMap.alt = find(["alt","alternate","second","secondary"]);
+    state.ui.columnMap.address = find(["address","location","city","area"]);
+    state.ui.columnMap.status = find(["status","state","result"]);
+    state.ui.columnMap.remarks = find(["remark","remarks","note","comment"]);
+    save();
+  }
+
+  function mappedRows(){
+    return state.ui.parsedRows.map(row => {
+      const pick = key => state.ui.columnMap[key] ? row[state.ui.columnMap[key]] : "";
+      return {
+        name: String(pick("name") || row.Name || row.name || "").trim(),
+        mobile: String(pick("mobile") || row.Mobile || row.mobile || "").trim(),
+        alt: String(pick("alt") || row.Alternate || row.alt || row.Alt || "").trim(),
+        address: String(pick("address") || row.Address || row.address || "").trim(),
+        status: String(pick("status") || row.Status || row.status || "Pending").trim() || "Pending",
+        remarks: String(pick("remarks") || row.Remarks || row.remarks || "").trim(),
+        updatedAt: new Date().toISOString()
+      };
+    }).filter(r => r.name || r.mobile || r.alt || r.address || r.remarks);
+  }
+
+  function setActiveNav(name){
+    state.ui.activeNav = name;
+    save();
+    render();
+  }
+
+  function renderLogin(){
+    app.innerHTML = `
+      <div class="login-shell">
+        <div class="glass login-box">
+          <div class="login-head">
+            <div class="logo">☎</div>
+            <div>
+              <div class="title">Call Desk CRM</div>
+              <div class="sub">Mobile screen friendly calling page for GitHub Pages</div>
+            </div>
+          </div>
+          <div class="notice">
+            This version stores login and data in the browser using localStorage, so saved items remain on this device/browser until cleared.
+          </div>
+          <div class="toggle-row">
+            <button class="toggle ${state.ui.loginMode === "login" ? "on" : ""}" id="loginModeBtn">Login</button>
+            <button class="toggle ${state.ui.loginMode === "signup" ? "on" : ""}" id="signupModeBtn">Create Login</button>
+          </div>
+          <div class="label">User ID</div>
+          <input id="userInput" type="text" placeholder="Enter user ID" autocomplete="username" />
+          <div class="label">Password</div>
+          <input id="passInput" type="password" placeholder="Enter password" autocomplete="${state.ui.loginMode === "login" ? "current-password" : "new-password"}" />
+          <div class="toolbar" style="margin-top:14px">
+            <button class="btn primary full" id="authBtn">${state.ui.loginMode === "login" ? "Login" : "Create Login"}</button>
+          </div>
+          <div class="mini" style="margin-top:14px">
+            After login, you can upload a file, map columns, call, open WhatsApp, save remarks, and download the report.
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("loginModeBtn").onclick = () => { state.ui.loginMode = "login"; save(); renderLogin(); };
+    document.getElementById("signupModeBtn").onclick = () => { state.ui.loginMode = "signup"; save(); renderLogin(); };
+    document.getElementById("authBtn").onclick = () => {
+      const username = document.getElementById("userInput").value.trim();
+      const password = document.getElementById("passInput").value;
+      if(!username || !password) return showToast("Please enter user ID and password");
+      if(state.ui.loginMode === "signup"){
+        if(state.users[username]) return showToast("This user ID already exists");
+        state.users[username] = { username, password };
+        state.session = { username };
+        save();
+        showToast("Login created");
+        renderApp();
+      }else{
+        const existing = state.users[username];
+        if(!existing || existing.password !== password) return showToast("Invalid login");
+        state.session = { username };
+        save();
+        showToast("Welcome back");
+        renderApp();
+      }
+    };
+  }
+
+  function sectionButton(id, label, sub){
+    return `
+      <button class="collapser ${state.ui[id] ? "" : "collapsed"}" data-toggle="${id}">
+        <div>
+          ${label}
+          ${sub ? `<small>${sub}</small>` : ""}
+        </div>
+        <div class="caret">▾</div>
+      </button>
+      <div class="collapse-body ${state.ui[id] ? "" : "hidden"}" data-body="${id}">
+    `;
+  }
+
+  function closeSection(){
+    return `</div>`;
+  }
+
+  function renderApp(){
+    const u = user();
+    if(!u){ renderLogin(); return; }
+
+    const c = counts();
+    const active = activeRecord();
+    const raw = rawActive();
+    const list = filteredRecords();
+    const total = state.records.length || 1;
+    const completed = state.records.filter(r => (r.status || "Pending") !== "Pending").length;
+    const prog = progress();
+
+    const activeStatus = raw ? (raw.status || "Pending") : "No records";
+    const statusClass =
+      activeStatus === "Interested" ? "b-interest" :
+      activeStatus === "Callback" ? "b-callback" :
+      activeStatus === "Not Interested" || activeStatus === "Wrong Number" || activeStatus === "No Answer" ? "b-no" :
+      activeStatus === "Busy" ? "b-busy" :
+      activeStatus === "Dropped" ? "b-dropped" :
+      "b-pending";
+
+    const hideClass = [
+      state.ui.focusMode ? "focus-mode" : "",
+      state.ui.queueOpen ? "" : "queue-hide",
+      state.ui.dashboardOpen ? "" : "stats-hide",
+      state.ui.mappingOpen ? "" : "mapping-hide",
+      state.ui.recordsOpen ? "" : "records-hide"
+    ].filter(Boolean).join(" ");
+
+    app.innerHTML = `
+      <div class="${hideClass}">
+        <div class="wrap">
+          <div class="glass topbar">
+            <div class="brand">
+              <div class="logo">☎</div>
+              <div class="brand-text">
+                <div class="title">Call Desk CRM</div>
+                <div class="sub">Logged in as <b>${esc(u.username)}</b> · GitHub Pages friendly · mobile first</div>
+              </div>
+            </div>
+            <div class="toolbar">
+              <span class="chip">Saved in browser</span>
+              <button class="btn dark small" id="logoutBtn">Logout</button>
+            </div>
+          </div>
+
+          <div class="layout">
+            <aside class="glass panel sidebar">
+              <div class="section">
+                <div class="section-title">
+                  <span>Quick controls</span>
+                  <span class="mini">hide what you do not need</span>
+                </div>
+                <div class="toggle-row">
+                  <button class="toggle ${state.ui.focusMode ? "on":""}" id="focusToggle">Focus mode</button>
+                  <button class="toggle ${state.ui.dashboardOpen ? "on":""}" id="dashToggle">Dashboard</button>
+                  <button class="toggle ${state.ui.queueOpen ? "on":""}" id="queueToggle">Queue</button>
+                  <button class="toggle ${state.ui.mappingOpen ? "on":""}" id="mapToggle">Mapping</button>
+                  <button class="toggle ${state.ui.recordsOpen ? "on":""}" id="recordsToggle">Table</button>
+                </div>
+              </div>
+
+              ${sectionButton("dashboardOpen", "Dashboard", "overall call count, progress, and outcome stats")}
+                <div class="dashboard-panel">
+                  <div class="stat-grid">
+                    <div class="stat"><div class="n">${c.total}</div><div class="l">Total records</div></div>
+                    <div class="stat"><div class="n">${c.pending}</div><div class="l">Pending</div></div>
+                    <div class="stat"><div class="n">${c.interested}</div><div class="l">Interested</div></div>
+                    <div class="stat"><div class="n">${c.callback}</div><div class="l">Callback</div></div>
+                    <div class="stat"><div class="n">${c.no}</div><div class="l">Not interested</div></div>
+                    <div class="stat"><div class="n">${c.dropped}</div><div class="l">Dropped</div></div>
+                  </div>
+                  <div class="label">Progress</div>
+                  <div class="progress"><div class="bar" style="width:${prog}%"></div></div>
+                  <div class="split" style="margin-top:8px">
+                    <div class="mini">${completed}/${total} completed</div>
+                    <div class="mini">${prog}%</div>
+                  </div>
+                </div>
+              ${closeSection()}
+
+              ${sectionButton("mappingOpen", "Upload & mapping", "CSV/XLSX import up to 20 MB")}
+                <div class="mapping-panel">
+                  <div class="notice">
+                    Upload your file, then map the columns to the fields below. The imported data can be applied or appended to the existing list.
+                  </div>
+                  <div class="label">Upload file</div>
+                  <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+                  <div class="toolbar" style="margin-top:10px">
+                    <button class="btn dark small" id="sampleBtn">Load sample</button>
+                    <button class="btn dark small" id="clearBtn">Clear data</button>
+                  </div>
+                  <div id="mappingBox" style="margin-top:12px"></div>
+                </div>
+              ${closeSection()}
+
+              <div class="section">
+                <div class="section-title"><span>Search & filter</span></div>
+                <div class="label">Search any field</div>
+                <input id="searchBox" type="text" placeholder="Search by name, number, address..." value="${esc(state.ui.search)}" />
+                <div class="label">Status filter</div>
+                <select id="statusFilter">
+                  <option ${state.ui.statusFilter === "All" ? "selected" : ""}>All</option>
+                  ${STATUS_OPTIONS.map(s => `<option ${state.ui.statusFilter === s ? "selected" : ""}>${esc(s)}</option>`).join("")}
+                </select>
+              </div>
+
+              <div class="section">
+                <div class="section-title"><span>Queue movement</span></div>
+                <div class="toolbar">
+                  <button class="btn dark small" id="prevBtn">⟵ Prev</button>
+                  <button class="btn dark small" id="nextBtn">Next ⟶</button>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title"><span>Reports</span></div>
+                <div class="toolbar">
+                  <button class="btn primary small" id="csvBtn">Download CSV</button>
+                  <button class="btn blue small" id="xlsxBtn">Download XLSX</button>
+                </div>
+              </div>
+            </aside>
+
+            <main class="glass panel call-panel">
+              ${sectionButton("dashboardOpen", "Calling screen", "large touch buttons, bigger font, and quick status tabs")}
+                <div class="call-card">
+                  ${raw ? `
+                    <div class="split">
+                      <div>
+                        <div class="mini">Current record</div>
+                        <div class="name">${esc(raw.name || "Unnamed")}</div>
+                      </div>
+                      <span class="badge ${statusClass}">${esc(activeStatus)}</span>
+                    </div>
+
+                    <a class="phone" href="tel:${esc(raw.mobile || "")}" id="callLink">📞 ${esc(raw.mobile || "No mobile number")}</a>
+
+                    <div class="pill-row">
+                      <span class="chip"><strong>Alt:</strong> ${esc(raw.alt || "—")}</span>
+                      <span class="chip"><strong>Row:</strong> ${active ? active.__index + 1 : "-"}</span>
+                      <span class="chip"><strong>Saved:</strong> ${raw.updatedAt ? "Yes" : "No"}</span>
+                    </div>
+
+                    <div class="data">
+                      <div class="kv"><div class="k">Mobile number</div><div class="v">${esc(raw.mobile || "—")}</div></div>
+                      <div class="kv"><div class="k">Alternate number</div><div class="v">${esc(raw.alt || "—")}</div></div>
+                      <div class="kv full"><div class="k">Address</div><div class="v">${esc(raw.address || "—")}</div></div>
+                      <div class="kv"><div class="k">Current status</div><div class="v">${esc(raw.status || "Pending")}</div></div>
+                      <div class="kv"><div class="k">Remarks</div><div class="v">${esc(raw.remarks || "—")}</div></div>
+                    </div>
+
+                    <div class="actions">
+                      <button class="btn green" id="callBtn">📞 Call</button>
+                      <button class="btn blue" id="waBtn">💬 WhatsApp</button>
+                      <button class="btn red" id="finishBtn">✖ Finish Call</button>
+                      <button class="btn dark" id="saveBtn">💾 Save</button>
+                    </div>
+
+                    <div class="label">Quick status tabs</div>
+                    <div class="tabs" id="statusTabs">
+                      ${STATUS_OPTIONS.map(s => `<div class="tab ${s === (raw.status || "Pending") ? "active" : ""}" data-status="${esc(s)}">${esc(s)}</div>`).join("")}
+                    </div>
+
+                    <div class="label">Remarks</div>
+                    <textarea id="remarksBox" placeholder="Type customer remarks here...">${esc(raw.remarks || "")}</textarea>
+
+                    <div class="sticky-actions">
+                      <div class="toolbar">
+                        <button class="btn primary full" id="saveNextBtn">Save & Next</button>
+                      </div>
+                    </div>
+                  ` : `
+                    <div class="notice danger">
+                      No record available. Upload a file, load sample data, or clear the filters to continue.
+                    </div>
+                  `}
+                </div>
+              ${closeSection()}
+
+              ${sectionButton("recordsOpen", "Records table", "full list with open button and report-friendly view")}
+                <div class="records-panel">
+                  <div class="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>#</th><th>Name</th><th>Mobile</th><th>Alt</th><th>Address</th><th>Status</th><th>Remarks</th><th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${list.map((r, idx) => `
+                          <tr>
+                            <td>${idx + 1}</td>
+                            <td>${esc(r.name || "")}</td>
+                            <td>${esc(r.mobile || "")}</td>
+                            <td>${esc(r.alt || "")}</td>
+                            <td>${esc(r.address || "")}</td>
+                            <td>${esc(r.status || "Pending")}</td>
+                            <td>${esc(r.remarks || "")}</td>
+                            <td><button class="btn dark small rowOpen" data-i="${idx}">Open</button></td>
+                          </tr>
+                        `).join("")}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ${closeSection()}
+            </main>
+
+            <aside class="glass panel queue-panel">
+              ${sectionButton("queueOpen", "Queue", "tap any row to open and call")}
+                <div class="queue-panel">
+                  <div class="mini" style="margin-bottom:10px">
+                    The active record stays where you left it unless you move to the next one.
+                  </div>
+                  <div class="list" id="queueList">
+                    ${list.map((r, idx) => `
+                      <div class="record ${idx === state.ui.currentIndex ? "active" : ""}" data-i="${idx}">
+                        <div>
+                          <div class="nm">${esc(r.name || "Unnamed")}</div>
+                          <div class="ph">${esc(r.mobile || "")}</div>
+                          <div class="ph">${esc(r.address || "")}</div>
+                        </div>
+                        <div style="text-align:right">
+                          <span class="badge">${esc(r.status || "Pending")}</span>
+                        </div>
+                      </div>
+                    `).join("")}
+                  </div>
+                </div>
+              ${closeSection()}
+
+              <div class="section">
+                <div class="section-title"><span>How it runs</span></div>
+                <div class="mini">
+                  1. Login<br>
+                  2. Upload file<br>
+                  3. Map columns<br>
+                  4. Call / WhatsApp<br>
+                  5. Save status and remarks<br>
+                  6. Move to next record<br>
+                  7. Download report
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title"><span>Mobile tips</span></div>
+                <div class="mini">
+                  Use focus mode to hide panels. On small screens, buttons are bigger and sections stack in one column automatically.
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="bar">
+            <button class="navbtn ${state.ui.activeNav === "call" ? "active" : ""}" data-nav="call"><span>☎</span>Call</button>
+            <button class="navbtn ${state.ui.activeNav === "queue" ? "active" : ""}" data-nav="queue"><span>☰</span>Queue</button>
+            <button class="navbtn ${state.ui.activeNav === "report" ? "active" : ""}" data-nav="report"><span>⬇</span>Report</button>
+            <button class="navbtn ${state.ui.activeNav === "settings" ? "active" : ""}" data-nav="settings"><span>⚙</span>Settings</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    bindApp();
+    renderMappingBox();
+    routeNav();
+  }
+
+  function renderMappingBox(){
+    const box = document.getElementById("mappingBox");
+    if(!box) return;
+
+    if(!state.ui.parsedRows.length){
+      box.innerHTML = `
+        <div class="notice" style="margin-top:12px">
+          No file uploaded yet. After upload, columns will appear here for mapping.
+        </div>
+      `;
+      return;
+    }
+
+    const headers = state.ui.headers || [];
+    const select = (field, label) => `
+      <div>
+        <div class="label">${label}</div>
+        <select data-map="${field}">
+          <option value="">-- Select column --</option>
+          ${headers.map(h => `<option value="${esc(h)}" ${state.ui.columnMap[field] === h ? "selected" : ""}>${esc(h)}</option>`).join("")}
+        </select>
+      </div>
+    `;
+
+    box.innerHTML = `
+      <div class="row two">
+        ${select("name","Name")}
+        ${select("mobile","Mobile")}
+        ${select("alt","Alternate")}
+        ${select("address","Address")}
+        ${select("status","Status")}
+        ${select("remarks","Remarks")}
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn primary small" id="applyMapBtn">Apply mapping</button>
+        <button class="btn dark small" id="appendBtn">Append rows</button>
+        <button class="btn dark small" id="autoMapBtn">Auto detect</button>
+      </div>
+      <div class="notice" style="margin-top:12px">
+        The imported rows are kept inside this browser until you clear them. After mapping, the app can use them as the calling list.
+      </div>
+    `;
+
+    box.querySelectorAll("select[data-map]").forEach(sel => {
+      sel.onchange = () => {
+        state.ui.columnMap[sel.dataset.map] = sel.value;
+        save();
+      };
+    });
+
+    document.getElementById("applyMapBtn").onclick = () => {
+      const mapped = mappedRows();
+      if(!mapped.length) return showToast("Nothing mapped yet");
+      state.records = mapped;
+      state.ui.currentIndex = 0;
+      save();
+      renderApp();
+      showToast(`Mapped ${mapped.length} rows`);
+    };
+
+    document.getElementById("appendBtn").onclick = () => {
+      const mapped = mappedRows();
+      if(!mapped.length) return showToast("Nothing mapped yet");
+      state.records = [...state.records, ...mapped];
+      state.ui.currentIndex = 0;
+      save();
+      renderApp();
+      showToast(`Appended ${mapped.length} rows`);
+    };
+
+    document.getElementById("autoMapBtn").onclick = () => {
+      applyAutoDetect();
+      renderMappingBox();
+      showToast("Auto mapping applied");
+    };
+  }
+
+  function bindApp(){
+    const logoutBtn = document.getElementById("logoutBtn");
+    if(logoutBtn) logoutBtn.onclick = () => { state.session = null; save(); renderLogin(); };
+
+    const toggle = (id, key) => {
+      const el = document.getElementById(id);
+      if(el) el.onclick = () => {
+        state.ui[key] = !state.ui[key];
+        if(key === "focusMode" && state.ui.focusMode){
+          state.ui.dashboardOpen = false;
+          state.ui.queueOpen = false;
+          state.ui.mappingOpen = false;
+          state.ui.recordsOpen = false;
+        }
+        save();
+        renderApp();
+      };
+    };
+
+    toggle("focusToggle","focusMode");
+    toggle("dashToggle","dashboardOpen");
+    toggle("queueToggle","queueOpen");
+    toggle("mapToggle","mappingOpen");
+    toggle("recordsToggle","recordsOpen");
+
+    document.querySelectorAll(".collapser").forEach(btn => {
+      btn.onclick = () => {
+        const key = btn.dataset.toggle;
+        state.ui[key] = !state.ui[key];
+        save();
+        renderApp();
+      };
+    });
+
+    const fileInput = document.getElementById("fileInput");
+    if(fileInput) fileInput.onchange = handleUpload;
+
+    const sampleBtn = document.getElementById("sampleBtn");
+    if(sampleBtn) sampleBtn.onclick = () => {
+      state.records = [
+        { name:"Amit Sharma", mobile:"9999994169", alt:"8888881111", address:"Delhi", status:"Pending", remarks:"Warm lead" },
+        { name:"Neha Verma", mobile:"9876543210", alt:"", address:"Noida", status:"Callback", remarks:"Call evening" },
+        { name:"Rahul Singh", mobile:"9123456780", alt:"9012345678", address:"Ghaziabad", status:"Interested", remarks:"Interested in plan" }
+      ];
+      state.ui.currentIndex = 0;
+      save();
+      renderApp();
+      showToast("Sample data loaded");
+    };
+
+    const clearBtn = document.getElementById("clearBtn");
+    if(clearBtn) clearBtn.onclick = () => {
+      if(confirm("Clear all data from this browser?")){
+        state.records = [];
+        state.ui.parsedRows = [];
+        state.ui.headers = [];
+        state.ui.columnMap = { name:"", mobile:"", alt:"", address:"", status:"", remarks:"" };
+        state.ui.currentIndex = 0;
+        save();
+        renderApp();
+        showToast("Data cleared");
+      }
+    };
+
+    const searchBox = document.getElementById("searchBox");
+    if(searchBox) searchBox.oninput = (e) => { state.ui.search = e.target.value; state.ui.currentIndex = 0; save(); renderApp(); };
+
+    const statusFilter = document.getElementById("statusFilter");
+    if(statusFilter) statusFilter.onchange = (e) => { state.ui.statusFilter = e.target.value; state.ui.currentIndex = 0; save(); renderApp(); };
+
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    if(prevBtn) prevBtn.onclick = () => shiftIndex(-1);
+    if(nextBtn) nextBtn.onclick = () => shiftIndex(1);
+
+    const csvBtn = document.getElementById("csvBtn");
+    const xlsxBtn = document.getElementById("xlsxBtn");
+    if(csvBtn) csvBtn.onclick = downloadCSV;
+    if(xlsxBtn) xlsxBtn.onclick = downloadXLSX;
+
+    const callBtn = document.getElementById("callBtn");
+    const waBtn = document.getElementById("waBtn");
+    const finishBtn = document.getElementById("finishBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const saveNextBtn = document.getElementById("saveNextBtn");
+
+    if(callBtn) callBtn.onclick = callActive;
+    if(waBtn) waBtn.onclick = whatsappActive;
+    if(finishBtn) finishBtn.onclick = () => setStatus("Dropped", "Call finished or hung up");
+    if(saveBtn) saveBtn.onclick = saveCurrent;
+    if(saveNextBtn) saveNextBtn.onclick = () => { saveCurrent(true); };
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.onclick = () => {
+        const rec = rawActive();
+        if(!rec) return;
+        rec.status = tab.dataset.status;
+        rec.updatedAt = new Date().toISOString();
+        save();
+        renderApp();
+        showToast(`Status set to ${tab.dataset.status}`);
+      };
+    });
+
+    document.querySelectorAll(".record").forEach(row => {
+      row.onclick = () => {
+        state.ui.currentIndex = Number(row.dataset.i) || 0;
+        state.ui.activeNav = "call";
+        save();
+        renderApp();
+      };
+    });
+
+    document.querySelectorAll(".rowOpen").forEach(btn => {
+      btn.onclick = () => {
+        state.ui.currentIndex = Number(btn.dataset.i) || 0;
+        state.ui.activeNav = "call";
+        save();
+        renderApp();
+      };
+    });
+
+    document.querySelectorAll(".navbtn").forEach(btn => {
+      btn.onclick = () => setActiveNav(btn.dataset.nav);
+    });
+  }
+
+  function setStatus(status, remark=""){
+    const rec = rawActive();
+    if(!rec) return;
+    rec.status = status;
+    if(remark) rec.remarks = remark;
+    rec.updatedAt = new Date().toISOString();
+    save();
+    renderApp();
+  }
+
+  function callActive(){
+    const rec = rawActive();
+    if(!rec || !rec.mobile) return showToast("No mobile number found");
+    const tel = "tel:" + String(rec.mobile).replace(/\s+/g, "");
+    location.href = tel;
+    showToast("Opening dialer");
+  }
+
+  function whatsappActive(){
+    const rec = rawActive();
+    if(!rec || !rec.mobile) return showToast("No mobile number found");
+    const num = String(rec.mobile).replace(/\D/g,"");
+    const msg = encodeURIComponent("Hello! Thank you for your interest.");
+    window.open(`https://wa.me/91${num}?text=${msg}`, "_blank", "noopener");
+  }
+
+  function saveCurrent(next=false){
+    const rec = rawActive();
+    if(!rec) return;
+    const txt = document.getElementById("remarksBox");
+    if(txt) rec.remarks = txt.value;
+    rec.updatedAt = new Date().toISOString();
+    save();
+    showToast("Saved");
+    if(next) shiftIndex(1, true);
+    else renderApp();
+  }
+
+  function shiftIndex(delta, skipPending=false){
+    const list = filteredRecords();
+    if(!list.length) return;
+    if(skipPending){
+      for(let step = 0; step < list.length; step++){
+        const idx = (state.ui.currentIndex + delta + step + list.length) % list.length;
+        const rr = state.records[list[idx].__index];
+        if((rr.status || "Pending") === "Pending"){
+          state.ui.currentIndex = idx;
+          save();
+          renderApp();
+          return;
+        }
+      }
+    }
+    state.ui.currentIndex = (state.ui.currentIndex + delta + list.length) % list.length;
+    save();
+    renderApp();
+  }
+
+  function handleUpload(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(file.size > 20 * 1024 * 1024){
+      e.target.value = "";
+      return showToast("File must be up to 20 MB");
+    }
+    const ext = file.name.toLowerCase().split(".").pop();
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try{
+        let rows = [];
+        if(ext === "csv"){
+          const wb = XLSX.read(ev.target.result, { type:"string" });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          rows = XLSX.utils.sheet_to_json(sheet, { defval:"" });
+        }else{
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          rows = XLSX.utils.sheet_to_json(sheet, { defval:"" });
+        }
+        state.ui.parsedRows = rows;
+        state.ui.headers = rows.length ? Object.keys(rows[0]) : [];
+        applyAutoDetect();
+        save();
+        renderApp();
+        showToast(`Uploaded ${rows.length} rows`);
+      }catch(err){
+        console.error(err);
+        showToast("Upload failed. Please check the file.");
+      }
+    };
+    if(ext === "csv") reader.readAsText(file);
+    else reader.readAsArrayBuffer(file);
+  }
+
+  function downloadCSV(){
+    if(!state.records.length) return showToast("No data to export");
+    const headers = ["name","mobile","alt","address","status","remarks","updatedAt"];
+    const csv = [headers.join(",")].concat(
+      state.records.map(r => headers.map(h => `"${String(r[h] ?? "").replace(/"/g,'""')}"`).join(","))
+    ).join("\n");
+    const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `call-desk-report-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast("CSV downloaded");
+  }
+
+  function downloadXLSX(){
+    if(!state.records.length) return showToast("No data to export");
+    const ws = XLSX.utils.json_to_sheet(state.records);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.writeFile(wb, `call-desk-report-${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast("XLSX downloaded");
+  }
+
+  function routeNav(){
+    const nav = state.ui.activeNav;
+    if(nav === "queue"){
+      const el = document.querySelector(".queue-panel");
+      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+    }else if(nav === "report"){
+      const el = document.querySelector(".records-panel");
+      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+    }else if(nav === "settings"){
+      const el = document.querySelector(".sidebar");
+      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+    }else{
+      const el = document.querySelector(".call-panel");
+      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
+  }
+
+  function render(){
+    if(!isLoggedIn()){
+      renderLogin();
+      return;
+    }
+    renderApp();
+  }
+
+  render();
+
+})();
+</script>
+</body>
+</html>
