@@ -1,1211 +1,788 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Call Desk CRM</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <style>
-    :root{
-      --bg:#08111d;
-      --bg2:#0f1830;
-      --panel:#101a33;
-      --panel2:#16213d;
-      --line:rgba(255,255,255,.10);
-      --text:#f3f7ff;
-      --muted:#9fb0d1;
-      --gold:#f5c542;
-      --green:#25d366;
-      --blue:#60a5fa;
-      --red:#ff6476;
-      --orange:#ff9f43;
-      --purple:#b58cff;
-      --shadow:0 16px 40px rgba(0,0,0,.28);
-      --radius:22px;
-      --radius2:16px;
-      --base:17px;
-      --action-h:76px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(245,197,66,.16), transparent 28%),
-        radial-gradient(circle at top right, rgba(96,165,250,.10), transparent 24%),
-        linear-gradient(180deg, #060b13 0%, var(--bg) 45%, #060910 100%);
-      color:var(--text);
-      font-size:var(--base);
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
-    }
-    button,input,select,textarea{font:inherit}
-    a{color:inherit}
-    .hidden{display:none !important}
-    .wrap{max-width:1400px; margin:0 auto; padding:14px 12px calc(var(--action-h) + 18px)}
-    .glass{
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-      border:1px solid var(--line);
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(12px);
-      border-radius:var(--radius);
-    }
-    .topbar{
-      position:sticky; top:0; z-index:80;
-      display:flex; gap:12px; justify-content:space-between; align-items:center;
-      padding:12px 14px; margin-bottom:14px;
-    }
-    .brand{display:flex; align-items:center; gap:12px; min-width:0}
-    .logo{
-      width:52px; height:52px; border-radius:18px;
-      display:grid; place-items:center;
-      background:linear-gradient(135deg, var(--gold), #fff0a3);
-      color:#1b1600; font-weight:900; font-size:24px;
-      box-shadow:0 10px 24px rgba(245,197,66,.18);
-      flex:0 0 auto;
-    }
-    .brand-text{min-width:0}
-    .title{font-size:20px; line-height:1.1; font-weight:900; letter-spacing:.01em}
-    .sub{font-size:13px; color:var(--muted); margin-top:4px; line-height:1.35}
-    .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    .btn{
-      border:0; cursor:pointer; text-decoration:none;
-      border-radius:16px; padding:14px 16px;
-      font-weight:800; color:#07111e; background:#fff;
-      display:inline-flex; gap:10px; align-items:center; justify-content:center;
-      transition:transform .16s ease, opacity .16s ease, background .16s ease;
-      min-height:48px;
-    }
-    .btn:hover{transform:translateY(-1px)}
-    .btn:disabled{opacity:.45; cursor:not-allowed; transform:none}
-    .btn.small{padding:10px 12px; min-height:42px; border-radius:14px; font-size:14px}
-    .btn.primary{background:linear-gradient(135deg, var(--gold), #ffe58f)}
-    .btn.green{background:linear-gradient(135deg, #2fe07b, #76f1ab)}
-    .btn.blue{background:linear-gradient(135deg, #73b3ff, #a9d5ff)}
-    .btn.red{background:linear-gradient(135deg, #ff7b8b, #ff9cab)}
-    .btn.dark{background:#16213d; color:var(--text); border:1px solid var(--line)}
-    .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--line)}
-    .btn.full{width:100%}
-    .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:9px 12px; border-radius:999px;
-      background:rgba(255,255,255,.05); border:1px solid var(--line);
-      color:var(--muted); font-size:13px; white-space:nowrap;
-    }
-    .chip strong{color:var(--text)}
-    .grid{display:grid; gap:14px}
-    .layout{
-      display:grid;
-      grid-template-columns: 320px minmax(0,1fr) 340px;
-      gap:14px;
-      align-items:start;
-    }
-    .panel{padding:14px}
-    .section{
-      padding:14px; margin-bottom:14px;
-    }
-    .section-title{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      font-size:13px; text-transform:uppercase; letter-spacing:.08em;
-      color:#b8c7e8; margin-bottom:12px;
-    }
-    .section-title .mini{font-size:12px; letter-spacing:0; text-transform:none; color:var(--muted)}
-    .row{display:grid; gap:10px}
-    .two{grid-template-columns:1fr 1fr}
-    .three{grid-template-columns:1fr 1fr 1fr}
-    .label{font-size:13px; color:var(--muted); margin:11px 0 8px}
-    input[type="text"], input[type="password"], input[type="email"], select, textarea{
-      width:100%;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background:#0b1324;
-      color:var(--text);
-      padding:14px 14px;
-      outline:none;
-    }
-    textarea{min-height:108px; resize:vertical}
-    input::placeholder, textarea::placeholder{color:#7e8fb0}
-    .notice{
-      font-size:13px; line-height:1.55;
-      padding:12px 14px;
-      background:rgba(96,165,250,.10);
-      border:1px solid rgba(96,165,250,.18);
-      border-radius:16px;
-      color:#deebff;
-    }
-    .danger{
-      background:rgba(255,100,118,.10);
-      border-color:rgba(255,100,118,.18);
-      color:#ffdfe3;
-    }
-    .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
-    .stat{
-      background:rgba(255,255,255,.05);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:14px;
-    }
-    .stat .n{font-size:26px; line-height:1; font-weight:900}
-    .stat .l{font-size:12px; color:var(--muted); margin-top:5px}
-    .progress{
-      width:100%; height:12px; border-radius:999px; overflow:hidden;
-      background:#0b1324; border:1px solid var(--line);
-    }
-    .bar{height:100%; width:0%; background:linear-gradient(90deg, var(--green), #79f0ac)}
-    .call-card{
-      background:linear-gradient(180deg, rgba(245,197,66,.10), rgba(255,255,255,.04));
-      border:1px solid rgba(245,197,66,.20);
-      border-radius:24px;
-      padding:16px;
-    }
-    .split{display:flex; align-items:center; justify-content:space-between; gap:12px}
-    .name{font-size:28px; line-height:1.1; font-weight:900; margin-top:2px}
-    .phone{
-      display:inline-flex; gap:10px; align-items:center;
-      font-size:30px; font-weight:900; text-decoration:none;
-      color:#fff8d0; margin-top:10px; word-break:break-word;
-    }
-    .pill-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
-    .data{
-      display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;
-    }
-    .kv{
-      padding:12px; border-radius:16px;
-      background:rgba(255,255,255,.05); border:1px solid var(--line);
-      min-width:0;
-    }
-    .kv .k{font-size:12px; color:var(--muted); margin-bottom:4px}
-    .kv .v{font-size:15px; font-weight:700; word-break:break-word; line-height:1.35}
-    .kv.full{grid-column:1/-1}
-    .actions{
-      display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;
-    }
-    .actions .btn{min-height:52px; font-size:16px}
-    .tabs{
-      display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;
-    }
-    .tab{
-      padding:11px 13px;
-      border-radius:999px;
-      background:#0b1324;
-      color:var(--text);
-      border:1px solid rgba(255,255,255,.10);
-      cursor:pointer;
-      user-select:none;
-      font-size:13px;
-      font-weight:800;
-    }
-    .tab.active{
-      background:linear-gradient(135deg, rgba(245,197,66,.96), rgba(255,229,143,.96));
-      color:#1b1600;
-    }
-    .list{
-      max-height:calc(100vh - 320px);
-      overflow:auto;
-      padding-right:4px;
-    }
-    .record{
-      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
-      padding:12px; border-radius:16px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      margin-bottom:10px;
-      cursor:pointer;
-    }
-    .record.active{outline:2px solid rgba(245,197,66,.34); background:rgba(245,197,66,.08)}
-    .record .nm{font-size:15px; font-weight:900; line-height:1.25}
-    .record .ph{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.3}
-    .badge{
-      display:inline-flex; align-items:center; justify-content:center;
-      min-width:72px;
-      padding:6px 10px; border-radius:999px;
-      background:#0b1324; border:1px solid var(--line);
-      color:var(--muted); font-size:12px; font-weight:800;
-      text-align:center;
-    }
-    .b-interest{color:#63f0a0}
-    .b-callback{color:#7cc7ff}
-    .b-no{color:#ff8693}
-    .b-busy{color:#ffbc7a}
-    .b-dropped{color:#d9c0ff}
-    .b-pending{color:#f5d873}
-    .collapser{
-      width:100%;
-      display:flex; justify-content:space-between; align-items:center; gap:12px;
-      padding:12px 0;
-      background:transparent; border:0; color:var(--text); cursor:pointer; text-align:left;
-      font-weight:900;
-    }
-    .collapser small{display:block; color:var(--muted); font-weight:600; margin-top:4px}
-    .caret{transition:transform .18s ease}
-    .collapsed .caret{transform:rotate(-90deg)}
-    .collapsed + .collapse-body{display:none}
-    .table-wrap{overflow:auto; border-radius:18px; border:1px solid var(--line)}
-    table{width:100%; min-width:980px; border-collapse:collapse; background:rgba(255,255,255,.03)}
-    th,td{
-      border-bottom:1px solid rgba(255,255,255,.08);
-      padding:11px 12px;
-      font-size:13px;
-      text-align:left;
-      vertical-align:top;
-    }
-    th{position:sticky; top:0; z-index:2; background:#0d1630}
-    tr:hover td{background:rgba(255,255,255,.03)}
-    .hidden-pane{display:none !important}
-    .sticky-actions{
-      position:sticky;
-      bottom:0;
-      background:linear-gradient(180deg, rgba(8,17,29,0), rgba(8,17,29,.88) 30%, rgba(8,17,29,.98));
-      padding:10px 0 0;
-      z-index:20;
-    }
-    .bottom-nav{
-      position:fixed;
-      left:0; right:0; bottom:0;
-      z-index:90;
-      padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-      background:linear-gradient(180deg, rgba(6,11,19,0), rgba(6,11,19,.8) 20%, rgba(6,11,19,.98));
-      backdrop-filter: blur(10px);
-    }
-    .bottom-nav .bar{
-      display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
-      background:rgba(16,26,51,.9);
-      border:1px solid var(--line);
-      border-radius:22px;
-      padding:10px;
-      box-shadow:var(--shadow);
-    }
-    .navbtn{
-      border:0; background:transparent; color:var(--muted);
-      padding:10px 8px; border-radius:16px;
-      display:flex; flex-direction:column; align-items:center; gap:5px;
-      font-size:12px; font-weight:700;
-      cursor:pointer;
-    }
-    .navbtn.active{color:var(--text); background:rgba(245,197,66,.12)}
-    .navbtn span{font-size:18px; line-height:1}
-    .toast{
-      position:fixed; right:14px; bottom:104px; z-index:9999;
-      background:rgba(9,14,25,.96);
-      color:var(--text);
-      border:1px solid var(--line);
-      box-shadow:var(--shadow);
-      border-radius:16px;
-      padding:14px 16px;
-      min-width:240px; max-width:360px;
-      display:none;
-    }
-    .toast.show{display:block; animation:pop .18s ease}
-    @keyframes pop{from{transform:translateY(8px);opacity:.2}to{transform:translateY(0);opacity:1}}
-    .login-shell{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:18px 12px;
-    }
-    .login-box{
-      width:100%;
-      max-width:480px;
-      padding:18px;
-    }
-    .login-head{
-      display:flex; align-items:center; gap:12px; margin-bottom:14px
-    }
-    .mini{font-size:12px; color:var(--muted); line-height:1.45}
-    .toggle-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
-    .toggle{
-      padding:10px 12px; border-radius:14px; border:1px solid var(--line);
-      background:#0b1324; color:var(--text); font-size:13px; cursor:pointer; font-weight:800;
-    }
-    .toggle.on{background:rgba(245,197,66,.16); border-color:rgba(245,197,66,.26); color:#fff7ca}
-    .focus-mode .sidebar,
-    .focus-mode .queue-panel,
-    .focus-mode .records-panel,
-    .focus-mode .dashboard-panel,
-    .focus-mode .mapping-panel{display:none !important}
-    .focus-mode .call-panel{grid-column:1/-1}
-    .focus-mode .topbar .sub{display:none}
-    .queue-hide .queue-panel{display:none !important}
-    .stats-hide .dashboard-panel{display:none !important}
-    .mapping-hide .mapping-panel{display:none !important}
-    .records-hide .records-panel{display:none !important}
-    .full-hide .sidebar{display:none !important}
-    @media (max-width: 1180px){
-      .layout{grid-template-columns:1fr}
-      .list{max-height:none}
-      .topbar{position:static}
-      .queue-panel,.sidebar,.records-panel,.dashboard-panel,.mapping-panel{display:block !important}
-    }
-    @media (max-width: 720px){
-      :root{--base:18px; --action-h:82px}
-      .wrap{padding:12px 10px calc(var(--action-h) + 18px)}
-      .title{font-size:18px}
-      .logo{width:48px; height:48px; border-radius:16px; font-size:22px}
-      .topbar{padding:12px}
-      .panel,.section{padding:12px}
-      .name{font-size:24px}
-      .phone{font-size:24px; word-break:break-word}
-      .data{grid-template-columns:1fr}
-      .actions{grid-template-columns:1fr}
-      .stat-grid{grid-template-columns:1fr 1fr}
-      .two,.three{grid-template-columns:1fr}
-      .bottom-nav .bar{grid-template-columns:repeat(4,1fr)}
-      .btn{padding:14px 14px}
-      .btn.small{font-size:13px}
-      .list{max-height:none}
-      .record{padding:12px}
-      table{min-width:820px}
-    }
-    @media (max-width: 420px){
-      .bottom-nav .bar{gap:6px; padding:8px}
-      .navbtn{font-size:11px; padding:8px 4px}
-      .navbtn span{font-size:17px}
-      .stat .n{font-size:22px}
-      .chip{font-size:12px}
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IndiaFirst Life — BA Earning &amp; Commission Calculator</title>
+<style>
+  :root{
+    --navy:#0B3D6B; --navy-dark:#082C4E; --orange:#F26522; --gold:#C9A44C;
+    --bg:#F4F6F9; --card:#FFFFFF; --line:#E2E7EE; --text:#1B2733; --muted:#5C6B7A;
+    --good:#1E8E5A; --warn:#B8860B; --bad:#C0392B;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(120deg,var(--navy) 0%,var(--navy-dark) 100%);color:#fff;padding:22px 24px;}
+  header .wrap{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  header h1{margin:0;font-size:22px;font-weight:700;letter-spacing:.2px;}
+  header h1 span{color:var(--orange);}
+  header p{margin:2px 0 0;font-size:12.5px;color:#c9d6e5;}
+  nav{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;gap:6px;flex-wrap:wrap;background:var(--navy-dark);}
+  nav button{background:none;border:none;color:#dbe6f2;padding:12px 16px;font-size:13.5px;cursor:pointer;border-bottom:3px solid transparent;font-weight:600;}
+  nav button.active{color:#fff;border-bottom:3px solid var(--orange);}
+  nav button:hover{color:#fff;}
+  main{max-width:1180px;margin:0 auto;padding:24px;}
+  .tab{display:none;}
+  .tab.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:820px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:0 1px 3px rgba(15,35,60,.06);}
+  .card h2{margin:0 0 14px;font-size:16px;color:var(--navy);display:flex;align-items:center;gap:8px;}
+  .card h2 .n{background:var(--orange);color:#fff;width:22px;height:22px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px;font-weight:600;}
+  select,input[type=number],input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fbfcfd;color:var(--text);}
+  select:focus,input:focus{outline:2px solid var(--orange);border-color:var(--orange);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .btn{background:var(--orange);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13.5px;cursor:pointer;margin-top:14px;}
+  .btn:hover{background:#d9591a;}
+  .btn.secondary{background:var(--navy);}
+  .btn.secondary:hover{background:var(--navy-dark);}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--navy);padding:6px 12px;font-size:12px;margin-top:0;}
+  .result-box{margin-top:18px;background:#F8FAFD;border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .result-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13.5px;}
+  .result-row:last-child{border-bottom:none;}
+  .result-row .k{color:var(--muted);}
+  .result-row .v{font-weight:700;color:var(--navy);}
+  .total-big{background:linear-gradient(120deg,var(--navy),var(--navy-dark));color:#fff;border-radius:12px;padding:18px 20px;margin-top:16px;display:flex;justify-content:space-between;align-items:center;}
+  .total-big .lbl{font-size:13px;color:#c9d6e5;}
+  .total-big .amt{font-size:26px;font-weight:800;color:#fff;}
+  .total-big .amt span{color:var(--orange);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);}
+  th:first-child,td:first-child{text-align:left;}
+  th{background:#F0F3F8;color:var(--navy);font-weight:700;position:sticky;top:0;}
+  .tablewrap{overflow-x:auto;max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge.good{background:#E4F5EC;color:var(--good);}
+  .badge.warn{background:#FBF1DC;color:var(--warn);}
+  .badge.bad{background:#FAE4E1;color:var(--bad);}
+  details{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#FBFCFE;}
+  details summary{cursor:pointer;padding:10px 14px;font-weight:700;color:var(--navy);font-size:13px;}
+  details .content{padding:0 14px 14px;font-size:12.5px;color:var(--text);}
+  .trail{border-left:3px solid var(--orange);padding-left:12px;margin:6px 0;}
+  .trail div{padding:4px 0;font-size:12.5px;}
+  .trail div b{color:var(--navy);}
+  .note{background:#FFF7E8;border:1px solid #F0DDA8;border-radius:10px;padding:10px 14px;font-size:12px;color:#6b5a1e;margin-top:14px;}
+  .note.danger{background:#FDEAE7;border-color:#F0BDB4;color:#7a2e21;}
+  footer{max-width:1180px;margin:20px auto 40px;padding:0 24px;font-size:11.5px;color:var(--muted);text-align:center;}
+  .disc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:11px;color:var(--muted);margin-top:24px;line-height:1.6;}
+  @media print{
+    nav,.btn,.ghost{display:none!important;}
+    body{background:#fff;}
+    .tab{display:block!important;}
+  }
+  .source-tag{font-size:10.5px;color:#8a94a3;margin-top:2px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;}
+  @media(max-width:820px){.two-col{grid-template-columns:1fr;}}
+</style>
 </head>
 <body>
-  <div id="toast" class="toast"></div>
-  <div id="app"></div>
+
+<header>
+  <div class="wrap">
+    <div>
+      <h1>IndiaFirst<span>Life</span> — BA Earning &amp; Commission Calculator</h1>
+      <p>Agency Channel · Commission Master + BA Proposition FY27 Q1 (effective 1 May 2026)</p>
+    </div>
+    <button class="btn ghost" onclick="window.print()" style="color:#fff;border-color:#3a5a7d;">🖨 Print / Save PDF</button>
+  </div>
+</header>
+
+<nav id="tabnav">
+  <button data-tab="commission" class="active">1. Advisor Commission</button>
+  <button data-tab="ba">2. BA Earning Calculator</button>
+  <button data-tab="mbg">3. MBG Check</button>
+  <button data-tab="reference">4. Reference Tables</button>
+  <button data-tab="about">About / Data Source</button>
+</nav>
+
+<main>
+
+  <!-- ============ TAB 1: ADVISOR COMMISSION ============ -->
+  <div class="tab active" id="tab-commission">
+    <div class="grid">
+      <div class="card">
+        <h2><span class="n">1</span> Business Input</h2>
+        <label>Product</label>
+        <select id="cProduct"></select>
+        <label>Premium Payment Term (PPT)</label>
+        <select id="cPPT"></select>
+        <label>Advisor Category</label>
+        <select id="cCategory">
+          <option value="mdrt">MDRT</option>
+          <option value="nonMdrt">Non-MDRT</option>
+        </select>
+        <div class="row2">
+          <div>
+            <label>Annual Premium (₹)</label>
+            <input type="number" id="cPremium" value="100000" min="0" step="1000">
+          </div>
+          <div>
+            <label>Policy Year to Preview</label>
+            <select id="cYear">
+              <option value="1">Year 1 (FYC)</option>
+              <option value="2">Year 2</option>
+              <option value="3">Year 3</option>
+              <option value="4">Year 4</option>
+              <option value="5">Year 5</option>
+              <option value="6">Year 6+ (within PPT)</option>
+              <option value="7">Year 6+ (post-PPT trail)</option>
+            </select>
+          </div>
+        </div>
+        <div class="hint">Top Product Rates apply to policies issued from 1 Nov 2025. Source: Commission Master (Agency Channel), page 2.</div>
+        <button class="btn" onclick="calcCommission()">Calculate Advisor Commission</button>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">2</span> Advisor Commission Result</h2>
+        <div id="commissionResult">
+          <p style="color:var(--muted);font-size:13px;">Select a product and click Calculate to see the commission breakdown.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <h2><span class="n">3</span> Full Year-wise Commission Schedule</h2>
+      <div class="tablewrap">
+        <table id="commissionSchedule"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: BA EARNINGS ============ -->
+  <div class="tab" id="tab-ba">
+    <div class="grid">
+      <div class="card">
+        <h2><span class="n">1</span> BA Profile</h2>
+        <label>Designation</label>
+        <select id="baDesig"></select>
+        <div class="row2">
+          <div>
+            <label>Vintage (months since joining/promotion)</label>
+            <input type="number" id="baVintage" value="10" min="0">
+          </div>
+          <div>
+            <label>13th-month DT Persistency</label>
+            <select id="baPersistencyBucket">
+              <option value="yes">Has 13m persistency bucket</option>
+              <option value="no">No 13m persistency bucket yet</option>
+            </select>
+          </div>
+        </div>
+        <div id="persistencySlabWrap">
+          <label>13th Month DT Persistency %</label>
+          <select id="baPersistencySlab">
+            <option value="70">&lt;70% (70% multiplier)</option>
+            <option value="80" selected>70%–&lt;75% (80%)</option>
+            <option value="90">75%–&lt;80% (90%)</option>
+            <option value="100">80%–&lt;90% (100%)</option>
+            <option value="110">≥90% (110%)</option>
+          </select>
+        </div>
+
+        <h2 style="margin-top:20px;"><span class="n">2</span> Direct Team (DT) Production</h2>
+        <div class="row2">
+          <div>
+            <label>Direct Team WRP this month (₹)</label>
+            <input type="number" id="baDtWrp" value="500000" min="0" step="1000">
+          </div>
+          <div>
+            <label>Direct Team Active Advisors</label>
+            <select id="baDtAdv">
+              <option value="0to1">0 to 1</option>
+              <option value="2">Exactly 2</option>
+              <option value="3">3 or more</option>
+            </select>
+          </div>
+        </div>
+        <div class="hint">Applicable FYC % (from Top Products, or enter manually below) is used to derive commission for MPB payouts.</div>
+        <label>Applicable FYC % on this DT WRP (as % of premium — e.g. 38.14)</label>
+        <input type="number" id="baFycPct" value="38.14" step="0.01">
+
+        <h2 style="margin-top:20px;"><span class="n">3</span> Indirect Team (IDT) Production</h2>
+        <div class="row3">
+          <div><label>L1 WRP (₹)</label><input type="number" id="baL1" value="0" min="0" step="1000"></div>
+          <div><label>L2 WRP (₹)</label><input type="number" id="baL2" value="0" min="0" step="1000"></div>
+          <div><label>L3 WRP (₹)</label><input type="number" id="baL3" value="0" min="0" step="1000"></div>
+        </div>
+        <label>Active BAs in L1 team</label>
+        <select id="baL1Active">
+          <option value="0">0 Active</option>
+          <option value="1">1 Active</option>
+          <option value="2">2 or more Active</option>
+        </select>
+
+        <h2 style="margin-top:20px;"><span class="n">4</span> Rolling 12-Month WRP (for Consistency Bonus)</h2>
+        <div class="row2">
+          <div><label>Rolling 12M DT WRP (₹)</label><input type="number" id="baRoll12DT" value="0" min="0" step="1000"></div>
+          <div><label>Rolling 12M Total Team WRP (₹)</label><input type="number" id="baRoll12TT" value="0" min="0" step="1000"></div>
+        </div>
+        <div class="row2">
+          <div><label>Agents in DT (current)</label><input type="number" id="baGateAgents" value="0" min="0"></div>
+          <div><label>FPAs created in DT (current)</label><input type="number" id="baGateFPA" value="0" min="0"></div>
+        </div>
+
+        <h2 style="margin-top:20px;"><span class="n">5</span> Distribution Building (this month)</h2>
+        <div class="row2">
+          <div><label>New FPAs created (≤M3 advisor)</label><input type="number" id="baFpaLte" value="0" min="0"></div>
+          <div><label>New SFPA+ created (≤M3 advisor)</label><input type="number" id="baSfpaLte" value="0" min="0"></div>
+        </div>
+        <label>New FPAs created (&gt;M3 advisor) — 5,000 each</label>
+        <input type="number" id="baFpaGt" value="0" min="0">
+        <label>Cumulative License-Active (LA) advisors coded (M0–M6 only, by M6)</label>
+        <select id="baLaSlab">
+          <option value="0">Below 3</option>
+          <option value="3">3 LA reached</option>
+          <option value="5">5 LA reached</option>
+          <option value="8">8 LA reached</option>
+          <option value="10">10 LA reached</option>
+        </select>
+        <div class="hint">DBB License Active Bonus only applies for M0–M6 vintage BAs.</div>
+
+        <button class="btn" onclick="calcBA()">Calculate BA Earnings</button>
+      </div>
+
+      <div class="card">
+        <h2><span class="n">6</span> BA Earning Result</h2>
+        <div id="baResult">
+          <p style="color:var(--muted);font-size:13px;">Fill in the inputs and click Calculate BA Earnings.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: MBG ============ -->
+  <div class="tab" id="tab-mbg">
+    <div class="grid">
+      <div class="card">
+        <h2><span class="n">1</span> Minimum Business Guarantee (Rolling 6 Months)</h2>
+        <label>Designation</label>
+        <select id="mbgDesig"></select>
+        <div class="row2">
+          <div><label>Rolling 6M Direct Team WRP (₹)</label><input type="number" id="mbgDT" value="0" min="0" step="1000"></div>
+          <div><label>Rolling 6M Indirect Team WRP (₹)</label><input type="number" id="mbgIDT" value="0" min="0" step="1000"></div>
+        </div>
+        <label>Current DT advisor team size</label>
+        <input type="number" id="mbgAdvSize" value="0" min="0">
+        <button class="btn" onclick="calcMBG()">Check MBG Status</button>
+      </div>
+      <div class="card">
+        <h2><span class="n">2</span> MBG Status</h2>
+        <div id="mbgResult"><p style="color:var(--muted);font-size:13px;">Enter figures and click Check MBG Status.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 4: REFERENCE ============ -->
+  <div class="tab" id="tab-reference">
+    <div class="card">
+      <h2>BA Progression Criteria (Distribution Route — Rolling 12 Months)</h2>
+      <div class="tablewrap"><table id="refProgression"></table></div>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h2>Consistency Bonus Slabs</h2>
+      <div class="tablewrap"><table id="refConsistency"></table></div>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h2>MPB DT Payout Grid (% of FYC)</h2>
+      <div class="tablewrap"><table id="refMpbDt"></table></div>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h2>MPB IDT Payout Grid (% of FYC)</h2>
+      <div class="tablewrap"><table id="refMpbIdt"></table></div>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h2>BDA / Salary Table (M2 and above)</h2>
+      <div class="tablewrap"><table id="refBda"></table></div>
+    </div>
+    <div class="note">
+      Extended product commission tables (Guaranteed Benefit Plan, Guarantee of Life Dreams Plan, Mahajeevan Plus,
+      Little Champ, Micro Bachat, Saral Jeevan Bima, Annuity products, ULIP &amp; Protection products, etc.) exist in the
+      uploaded Commission Master but are laid out in a complex multi-product OCR table. Rather than risk mis-mapping a
+      product to the wrong rate, this app currently activates the calculator only for the four clearly-tabulated
+      <b>Top Products</b> (LGIP, AIM, Smart Pay, Fortune Plus Plan). Send the source Excel/original table for those
+      other products and they can be added with full confidence.
+    </div>
+  </div>
+
+  <!-- ============ TAB 5: ABOUT ============ -->
+  <div class="tab" id="tab-about">
+    <div class="card">
+      <h2>About this Calculator</h2>
+      <p style="font-size:13.5px;line-height:1.7;">
+        This tool implements the <b>Advisor Commission Engine</b> from the IndiaFirst Life Commission Master (Agency
+        Channel, Top Product Rates effective 1 Nov 2025) and the <b>BA Proposition</b> earning constructs (Hiring,
+        Earnings, Progression, MBG — Quarterly Design FY27 Q1, effective 1 May 2026, applicable for Individual BAs).
+      </p>
+      <p style="font-size:13.5px;line-height:1.7;">
+        Every figure calculated here traces back to a rule in the source documents — expand "View Calculation
+        Details" under any result to see the exact rate, slab and formula applied. Nothing is invented: where the
+        source data was ambiguous (some Traditional/ULIP/Annuity product rows in the Commission Master), those
+        products are intentionally left out of the live calculator rather than guessed at (see Reference tab).
+      </p>
+      <h2 style="margin-top:20px;">Deploying on GitHub Pages</h2>
+      <ol style="font-size:13px;line-height:1.8;">
+        <li>Create a new GitHub repository (e.g. <code>ba-calculator</code>).</li>
+        <li>Upload this <code>index.html</code> file to the repository root.</li>
+        <li>Go to <b>Settings → Pages</b>, set Source to <b>Deploy from a branch</b>, branch <b>main</b>, folder <b>/ (root)</b>, then Save.</li>
+        <li>Your calculator will be live at <code>https://&lt;your-username&gt;.github.io/ba-calculator/</code> within a few minutes.</li>
+      </ol>
+      <p style="font-size:13px;color:var(--muted);">No build step, server, or dependency is required — this is a single static HTML file.</p>
+      <div class="disc">
+        <b>Disclaimer:</b> For internal circulation only. Commission rates shown are net of GST. This calculator is a
+        planning/illustration aid built from internal training documents; the company reserves the right to alter,
+        amend or discontinue any scheme or construct at any time, and the final interpretation and decision on all
+        matters rests with IndiaFirst Life management. Always confirm figures against the official Commission Master
+        and BA Proposition documents before using them for client-facing or compensation decisions.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>IndiaFirst Life · Commission Master (Agency Channel) &amp; BA Proposition FY27 Q1 · Internal use only · Built as a static, offline-capable calculator</footer>
 
 <script>
-(() => {
-  const LS_USERS = "cdcrm_users_v2";
-  const LS_SESSION = "cdcrm_session_v2";
-  const LS_DATA = "cdcrm_data_v2";
-  const LS_UI = "cdcrm_ui_v2";
+/* ============================================================
+   DATA — extracted directly from the uploaded source documents
+   ============================================================ */
 
-  const STATUS_OPTIONS = ["Pending","Interested","Not Interested","Callback","Busy","Wrong Number","No Answer","Dropped","Follow Up","Do Not Call","Closed"];
-  const ACTIONS = ["call","wa","save","next"];
-
-  const app = document.getElementById("app");
-  const toast = document.getElementById("toast");
-
-  const state = {
-    users: JSON.parse(localStorage.getItem(LS_USERS) || "{}"),
-    session: JSON.parse(localStorage.getItem(LS_SESSION) || "null"),
-    records: JSON.parse(localStorage.getItem(LS_DATA) || "[]"),
-    ui: Object.assign({
-      loginMode: "login",
-      dashboardOpen: true,
-      queueOpen: true,
-      mappingOpen: true,
-      recordsOpen: true,
-      focusMode: false,
-      activeNav: "call",
-      statusFilter: "All",
-      search: "",
-      currentIndex: 0,
-      columnMap: { name:"", mobile:"", alt:"", address:"", status:"", remarks:"" },
-      parsedRows: [],
-      headers: []
-    }, JSON.parse(localStorage.getItem(LS_UI) || "{}"))
-  };
-
-  function save(){
-    localStorage.setItem(LS_USERS, JSON.stringify(state.users));
-    localStorage.setItem(LS_SESSION, JSON.stringify(state.session));
-    localStorage.setItem(LS_DATA, JSON.stringify(state.records));
-    localStorage.setItem(LS_UI, JSON.stringify(state.ui));
-  }
-
-  function showToast(msg, ms=2200){
-    toast.textContent = msg;
-    toast.classList.add("show");
-    clearTimeout(showToast.t);
-    showToast.t = setTimeout(()=>toast.classList.remove("show"), ms);
-  }
-
-  function esc(s){
-    return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  }
-
-  function norm(s){ return String(s ?? "").trim().toLowerCase().replace(/[\s_\-]+/g,""); }
-  function user(){ return state.session ? state.users[state.session.username] : null; }
-  function isLoggedIn(){ return !!user(); }
-
-  function filteredRecords(){
-    let list = state.records.map((r, i) => ({...r, __index: i}));
-    if(state.ui.statusFilter !== "All"){
-      list = list.filter(r => (r.status || "Pending") === state.ui.statusFilter);
+// ---- Commission Master: Top Product Rates (policies issued from 1 Nov 2025) ----
+// Each rate array = [FYC(Y1), Y2, Y3, Y4, Y5, "Total 6th+" (within-PPT trail), "6th+" (post-PPT trail)]
+const COMMISSION_MASTER = {
+  "IndiaFirst Life LGIP": {
+    ppts: {
+      "5": { mdrt:[9.3,2.5,1.7,1.7,0.8,0.0,0.0], nonMdrt:[8.5,3.4,1.7,1.7,0.8,0.0,0.0] },
+      "6": { mdrt:[11.9,2.5,1.7,1.7,0.8,0.8,0.8], nonMdrt:[10.2,3.4,2.5,1.7,0.8,0.8,0.8] },
+      "7": { mdrt:[15.3,3.4,2.5,1.7,0.8,1.7,0.8], nonMdrt:[13.6,4.2,3.4,1.7,0.8,1.7,0.8] },
+      "8": { mdrt:[20.3,4.2,3.4,1.7,0.8,2.5,0.8], nonMdrt:[17.8,5.1,3.4,2.5,1.7,2.5,0.8] },
+      "10":{ mdrt:[28.8,5.1,4.2,1.7,1.7,4.2,0.8], nonMdrt:[24.6,6.8,5.1,3.4,1.7,4.2,0.8] },
+      "12":{ mdrt:[38.1,6.8,5.1,2.5,1.7,5.9,0.8], nonMdrt:[33.1,8.5,5.9,4.2,2.5,5.9,0.8] }
     }
-    if(state.ui.search){
-      const q = state.ui.search.toLowerCase();
-      list = list.filter(r => Object.values(r).join(" ").toLowerCase().includes(q));
+  },
+  "IndiaFirst Life AIM": {
+    ppts: {
+      "6": { mdrt:[15.3,4.2,3.4,1.7,0.8,0.8,0.8], nonMdrt:[11.9,5.1,4.2,2.5,1.7,0.8,0.8] },
+      "8": { mdrt:[20.3,4.2,3.4,1.7,0.8,2.5,0.8], nonMdrt:[16.1,5.9,4.2,2.5,1.7,2.5,0.8] },
+      "10":{ mdrt:[25.4,4.2,3.4,1.7,0.8,4.2,0.8], nonMdrt:[20.3,5.9,4.2,3.4,1.7,4.2,0.8] },
+      "12":{ mdrt:[30.5,4.2,3.4,1.7,0.8,5.9,0.8], nonMdrt:[24.6,6.8,5.1,2.5,1.7,5.9,0.8] }
     }
-    return list;
+  },
+  "IndiaFirst Life Smart Pay": {
+    ppts: {
+      "5": { mdrt:[9.3,2.5,1.7,1.7,0.8,0.0,0.0], nonMdrt:[8.5,3.4,1.7,1.7,0.8,0.0,0.0] },
+      "6": { mdrt:[11.9,2.5,1.7,1.7,0.8,0.8,0.8], nonMdrt:[10.2,3.4,2.5,1.7,0.8,0.8,0.8] },
+      "7": { mdrt:[15.3,3.4,2.5,1.7,0.8,1.7,0.8], nonMdrt:[13.6,4.2,3.4,1.7,0.8,1.7,0.8] },
+      "8": { mdrt:[20.3,4.2,3.4,1.7,0.8,2.5,0.8], nonMdrt:[17.8,5.1,3.4,2.5,1.7,2.5,0.8] },
+      "10":{ mdrt:[28.8,5.1,4.2,1.7,1.7,4.2,0.8], nonMdrt:[24.6,6.8,5.1,3.4,1.7,4.2,0.8] },
+      "12":{ mdrt:[38.1,6.8,5.1,2.5,1.7,5.9,0.8], nonMdrt:[33.1,8.5,5.9,4.2,2.5,5.9,0.8] },
+      "15":{ mdrt:[38.1,6.8,5.1,2.5,1.7,8.5,0.8], nonMdrt:[33.1,8.5,6.8,3.4,2.5,8.5,0.8] },
+      "17":{ mdrt:[38.1,6.8,5.1,2.5,1.7,10.2,0.8], nonMdrt:[33.1,8.5,6.8,3.4,2.5,10.2,0.8] },
+      "20":{ mdrt:[38.1,6.8,5.1,2.5,1.7,12.7,0.8], nonMdrt:[33.1,8.5,6.8,3.4,2.5,12.7,0.8] }
+    }
+  },
+  "IndiaFirst Life Fortune Plus Plan": {
+    ppts: {
+      "6": { mdrt:[11.9,2.5,1.7,1.7,0.8,0.8,0.8], nonMdrt:[10.2,3.4,2.5,1.7,0.8,0.8,0.8] },
+      "7": { mdrt:[15.3,3.4,2.5,1.7,0.8,1.7,0.8], nonMdrt:[13.6,4.2,3.4,1.7,0.8,1.7,0.8] },
+      "8": { mdrt:[20.3,4.2,3.4,1.7,0.8,2.5,0.8], nonMdrt:[17.8,5.1,3.4,2.5,1.7,2.5,0.8] },
+      "9": { mdrt:[22.9,4.2,3.4,1.7,0.8,3.4,0.8], nonMdrt:[19.5,5.9,4.2,2.5,1.7,2.5,0.8] },
+      "10":{ mdrt:[28.8,5.1,4.2,1.7,1.7,4.2,0.8], nonMdrt:[24.6,6.8,5.1,3.4,1.7,4.2,0.8] },
+      "11":{ mdrt:[38.1,5.9,5.1,2.5,1.7,5.1,0.8], nonMdrt:[33.1,8.5,5.9,3.4,1.7,5.9,0.8] },
+      "12":{ mdrt:[38.1,6.8,5.1,2.5,1.7,5.9,0.8], nonMdrt:[33.1,8.5,5.9,4.2,2.5,5.9,0.8] }
+    }
   }
+};
+const YEAR_LABELS = ["Year 1 (FYC)","Year 2","Year 3","Year 4","Year 5","Year 6+ (within PPT, \"Total 6th+\")","Year 6+ (post-PPT trail, \"6th+\")"];
 
-  function activeListIndex(){
-    const list = filteredRecords();
-    if(!list.length) return -1;
-    if(state.ui.currentIndex >= list.length) state.ui.currentIndex = 0;
-    if(state.ui.currentIndex < 0) state.ui.currentIndex = 0;
-    return state.ui.currentIndex;
-  }
+// ---- BA Proposition data ----
+const DESIGNATIONS = ["BA","SBA","CBA","Partner","Sr. Partner","Ex. Partner","Mng. Partner"];
 
-  function activeRecord(){
-    const list = filteredRecords();
-    const idx = activeListIndex();
-    return idx >= 0 ? list[idx] : null;
-  }
+const BDA_TABLE = { // designation: [salary, BDA(M2+), productivityGateDTWRP, totalIncome]
+  "BA":[1626,2425,40000,4051], "SBA":[1626,4874,60000,6500], "CBA":[1626,7374,70000,9000],
+  "Partner":[1626,10874,125000,12500], "Sr. Partner":[1626,13374,125000,15000],
+  "Ex. Partner":[1626,14874,150000,16500], "Mng. Partner":[1626,15874,150000,17500]
+};
 
-  function rawActive(){
-    const a = activeRecord();
-    return a ? state.records[a.__index] : null;
-  }
+const MPB_DT_SLABS = [
+  {label:"30k to <1L", min:30000, max:100000, m0m6_0to1:25, m7_0to1:25, adv2:30, adv3:35},
+  {label:"1L to <2.5L", min:100000, max:250000, m0m6_0to1:35, m7_0to1:35, adv2:40, adv3:45},
+  {label:"2.5L to <5L", min:250000, max:500000, m0m6_0to1:40, m7_0to1:35, adv2:50, adv3:55},
+  {label:"5L to <7.5L", min:500000, max:750000, m0m6_0to1:50, m7_0to1:40, adv2:60, adv3:65},
+  {label:"7.5L to <10L", min:750000, max:1000000, m0m6_0to1:55, m7_0to1:45, adv2:65, adv3:70},
+  {label:">=10L", min:1000000, max:Infinity, m0m6_0to1:70, m7_0to1:60, adv2:85, adv3:90}
+];
 
-  function counts(){
-    const c = { total: state.records.length, pending:0, interested:0, callback:0, no:0, dropped:0 };
-    state.records.forEach(r => {
-      const s = r.status || "Pending";
-      if(s === "Pending") c.pending++;
-      if(s === "Interested") c.interested++;
-      if(s === "Callback") c.callback++;
-      if(s === "Not Interested") c.no++;
-      if(s === "Dropped") c.dropped++;
-    });
-    return c;
-  }
+const MPB_IDT_SLABS = [
+  {label:"30k to <1L", min:30000, max:100000, L1:6, L2:3, L3:2},
+  {label:"1L to <2.5L", min:100000, max:250000, L1:8, L2:4, L3:2},
+  {label:"2.5L to <5L", min:250000, max:500000, L1:10, L2:5, L3:3},
+  {label:"5L to <7.5L", min:500000, max:750000, L1:13, L2:7, L3:3},
+  {label:"7.5L to <10L", min:750000, max:1000000, L1:15, L2:8, L3:4},
+  {label:">=10L", min:1000000, max:Infinity, L1:20, L2:10, L3:6}
+];
 
-  function progress(){
-    const total = state.records.length || 1;
-    const done = state.records.filter(r => (r.status || "Pending") !== "Pending").length;
-    return Math.round((done / total) * 100);
-  }
+const PERSISTENCY_GRID = [ {label:"<70%", mult:70}, {label:"70% to <75%", mult:80}, {label:"75% to <80%", mult:90}, {label:"80% to <90%", mult:100}, {label:">=90%", mult:110} ];
 
-  function applyAutoDetect(){
-    const headers = state.ui.headers.map(h => ({ raw: h, n: norm(h) }));
-    const find = keys => {
-      const hit = headers.find(h => keys.some(k => h.n.includes(k)));
-      return hit ? hit.raw : "";
-    };
-    state.ui.columnMap.name = find(["name","customer","client","lead","fullname","fullnam"]);
-    state.ui.columnMap.mobile = find(["mobile","phone","contact","number","cell"]);
-    state.ui.columnMap.alt = find(["alt","alternate","second","secondary"]);
-    state.ui.columnMap.address = find(["address","location","city","area"]);
-    state.ui.columnMap.status = find(["status","state","result"]);
-    state.ui.columnMap.remarks = find(["remark","remarks","note","comment"]);
-    save();
-  }
+const CONSISTENCY_SLABS = [
+  {dt:1000000, tt:2000000, amount:10000, gate:"Min 50k from DT in a month"},
+  {dt:2000000, tt:4000000, amount:20000, gate:"Min 50k from DT in a month"},
+  {dt:3000000, tt:6000000, amount:40000, gate:"Min 50k from DT in a month"},
+  {dt:4000000, tt:8000000, amount:50000, gate:"Min 50k from DT in a month"},
+  {dt:5000000, tt:10000000, amount:60000, gate:"Min 50k from DT in a month"},
+  {dt:7500000, tt:15000000, amount:80000, gate:"Min 1L from DT in a month"},
+  {dt:10000000, tt:20000000, amount:100000, gate:"Min 1L from DT in a month"},
+  {dt:15000000, tt:30000000, amount:150000, gate:"Min 1L from DT in a month"},
+  {dt:20000000, tt:40000000, amount:200000, gate:"Min 1L from DT in a month"}
+];
 
-  function mappedRows(){
-    return state.ui.parsedRows.map(row => {
-      const pick = key => state.ui.columnMap[key] ? row[state.ui.columnMap[key]] : "";
-      return {
-        name: String(pick("name") || row.Name || row.name || "").trim(),
-        mobile: String(pick("mobile") || row.Mobile || row.mobile || "").trim(),
-        alt: String(pick("alt") || row.Alternate || row.alt || row.Alt || "").trim(),
-        address: String(pick("address") || row.Address || row.address || "").trim(),
-        status: String(pick("status") || row.Status || row.status || "Pending").trim() || "Pending",
-        remarks: String(pick("remarks") || row.Remarks || row.remarks || "").trim(),
-        updatedAt: new Date().toISOString()
-      };
-    }).filter(r => r.name || r.mobile || r.alt || r.address || r.remarks);
-  }
+const LA_SLABS = { "0":0, "3":10000, "5":25000, "8":50000, "10":75000 };
 
-  function setActiveNav(name){
-    state.ui.activeNav = name;
-    save();
-    render();
-  }
+const PROGRESSION = [
+  {from:"BA", to:"SBA", dtAdv:"6 adv (2 FPA)", wrp:"NA", persistency:"80%", dtGate:"3 adv", training:80},
+  {from:"SBA", to:"CBA", dtAdv:"9 adv (3 FPA)", wrp:"NA", persistency:"80%", dtGate:"3 adv", training:60},
+  {from:"CBA", to:"Partner", dtAdv:"10 adv (5 FPA)", wrp:"NA", persistency:"80%", dtGate:"2 FPA", training:50},
+  {from:"Partner", to:"Sr. Partner", dtAdv:"15 adv (10 FPA)", wrp:"20,00,000", persistency:"80%", dtGate:"2 FPA", training:40},
+  {from:"Sr. Partner", to:"Ex. Partner", dtAdv:"20 adv (10 FPA)", wrp:"30,00,000", persistency:"80%", dtGate:"2 FPA", training:25},
+  {from:"Ex. Partner", to:"Mng. Partner", dtAdv:"20 adv (10 FPA)", wrp:"50,00,000", persistency:"80%", dtGate:"2 FPA", training:25}
+];
 
-  function renderLogin(){
-    app.innerHTML = `
-      <div class="login-shell">
-        <div class="glass login-box">
-          <div class="login-head">
-            <div class="logo">☎</div>
-            <div>
-              <div class="title">Call Desk CRM</div>
-              <div class="sub">Mobile screen friendly calling page for GitHub Pages</div>
-            </div>
-          </div>
-          <div class="notice">
-            This version stores login and data in the browser using localStorage, so saved items remain on this device/browser until cleared.
-          </div>
-          <div class="toggle-row">
-            <button class="toggle ${state.ui.loginMode === "login" ? "on" : ""}" id="loginModeBtn">Login</button>
-            <button class="toggle ${state.ui.loginMode === "signup" ? "on" : ""}" id="signupModeBtn">Create Login</button>
-          </div>
-          <div class="label">User ID</div>
-          <input id="userInput" type="text" placeholder="Enter user ID" autocomplete="username" />
-          <div class="label">Password</div>
-          <input id="passInput" type="password" placeholder="Enter password" autocomplete="${state.ui.loginMode === "login" ? "current-password" : "new-password"}" />
-          <div class="toolbar" style="margin-top:14px">
-            <button class="btn primary full" id="authBtn">${state.ui.loginMode === "login" ? "Login" : "Create Login"}</button>
-          </div>
-          <div class="mini" style="margin-top:14px">
-            After login, you can upload a file, map columns, call, open WhatsApp, save remarks, and download the report.
-          </div>
+const MBG = { // designation: {dt, idt, advSize}
+  "BA":{dt:24000, idt:null, adv:2}, "SBA":{dt:30000, idt:50000, adv:2}, "CBA":{dt:36000, idt:50000, adv:2},
+  "Partner":{dt:50000, idt:75000, adv:2}, "Sr. Partner":{dt:50000, idt:75000, adv:2},
+  "Ex. Partner":{dt:75000, idt:100000, adv:2}, "Mng. Partner":{dt:75000, idt:100000, adv:2}
+};
+
+const IDT_ELIGIBILITY = { "BA":[], "SBA":["L1"], "CBA":["L1","L2"], "Partner":["L1","L2","L3"], "Sr. Partner":["L1","L2","L3"], "Ex. Partner":["L1","L2","L3"], "Mng. Partner":["L1","L2","L3"] };
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function inr(n){
+  if (n===null||n===undefined||isNaN(n)) return "—";
+  const neg = n<0; n=Math.abs(n);
+  let s = n.toFixed(2);
+  let [int, dec] = s.split(".");
+  let last3 = int.slice(-3), rest = int.slice(0,-3);
+  if (rest !== "") last3 = "," + last3;
+  let formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + last3;
+  return (neg?"-":"") + "₹" + formatted + "." + dec;
+}
+function pct(n){ return n.toFixed(2) + "%"; }
+function findSlab(slabs, val){ return slabs.find(s=>val>=s.min && val<s.max) || slabs[slabs.length-1]; }
+function persistencyMultFromSlab(slab){ return PERSISTENCY_GRID.find(p=>p.mult==slab)?.mult ?? 100; }
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+document.querySelectorAll('#tabnav button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#tabnav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================================================
+   TAB 1: ADVISOR COMMISSION
+   ============================================================ */
+function initCommissionForm(){
+  const prodSel = document.getElementById('cProduct');
+  Object.keys(COMMISSION_MASTER).forEach(p=>{
+    const o=document.createElement('option'); o.value=p; o.textContent=p.replace("IndiaFirst Life ",""); prodSel.appendChild(o);
+  });
+  prodSel.addEventListener('change', populatePPT);
+  populatePPT();
+}
+function populatePPT(){
+  const prod = document.getElementById('cProduct').value;
+  const pptSel = document.getElementById('cPPT');
+  pptSel.innerHTML = "";
+  Object.keys(COMMISSION_MASTER[prod].ppts).forEach(ppt=>{
+    const o=document.createElement('option'); o.value=ppt; o.textContent=ppt+" years"; pptSel.appendChild(o);
+  });
+}
+document.addEventListener('DOMContentLoaded', initCommissionForm);
+
+function calcCommission(){
+  const prod = document.getElementById('cProduct').value;
+  const ppt = document.getElementById('cPPT').value;
+  const cat = document.getElementById('cCategory').value;
+  const premium = parseFloat(document.getElementById('cPremium').value)||0;
+  const yearIdx = parseInt(document.getElementById('cYear').value)-1;
+
+  const rule = COMMISSION_MASTER[prod].ppts[ppt];
+  if(!rule){ document.getElementById('commissionResult').innerHTML = '<p class="note danger">Rule/data not available in the uploaded source for this combination.</p>'; return; }
+  const rates = rule[cat];
+  const rate = rates[yearIdx];
+  const amount = premium * rate/100;
+
+  document.getElementById('commissionResult').innerHTML = `
+    <div class="result-box">
+      <div class="result-row"><span class="k">Product</span><span class="v">${prod.replace("IndiaFirst Life ","")}</span></div>
+      <div class="result-row"><span class="k">PPT</span><span class="v">${ppt} years</span></div>
+      <div class="result-row"><span class="k">Advisor Category</span><span class="v">${cat==='mdrt'?'MDRT':'Non-MDRT'}</span></div>
+      <div class="result-row"><span class="k">Selected Year</span><span class="v">${YEAR_LABELS[yearIdx]}</span></div>
+      <div class="result-row"><span class="k">Applicable Commission Rate</span><span class="v">${pct(rate)}</span></div>
+      <div class="result-row"><span class="k">Premium (Commission Base)</span><span class="v">${inr(premium)}</span></div>
+    </div>
+    <div class="total-big">
+      <div><div class="lbl">Advisor Commission</div><div class="source-tag" style="color:#c9d6e5;">Rate × Base, net of GST</div></div>
+      <div class="amt">${inr(amount)}</div>
+    </div>
+    <details open><summary>View Calculation Details</summary>
+      <div class="content">
+        <div class="trail">
+          <div>Premium <b>${inr(premium)}</b></div>
+          <div>↓ Product selected: <b>${prod}</b></div>
+          <div>↓ Commission Master rule matched: PPT <b>${ppt}yrs</b>, <b>${cat==='mdrt'?'MDRT':'Non-MDRT'}</b> rate table</div>
+          <div>↓ Applicable rate for ${YEAR_LABELS[yearIdx]}: <b>${pct(rate)}</b></div>
+          <div>↓ Formula: ${inr(premium)} × ${rate}% = <b>${inr(amount)}</b></div>
         </div>
       </div>
-    `;
+    </details>
+    <div class="source-tag">Source: Commission Master (Agency Channel) — Top Product Rates, applicable for policies issued from 1 Nov 2025.</div>
+  `;
+  renderSchedule(prod, ppt, cat, premium);
+}
+function renderSchedule(prod, ppt, cat, premium){
+  const rates = COMMISSION_MASTER[prod].ppts[ppt][cat];
+  let html = '<tr><th>Year</th><th>Rate</th><th>Amount</th></tr>';
+  rates.forEach((r,i)=>{
+    html += `<tr><td>${YEAR_LABELS[i]}</td><td>${pct(r)}</td><td>${inr(premium*r/100)}</td></tr>`;
+  });
+  document.getElementById('commissionSchedule').innerHTML = html;
+}
 
-    document.getElementById("loginModeBtn").onclick = () => { state.ui.loginMode = "login"; save(); renderLogin(); };
-    document.getElementById("signupModeBtn").onclick = () => { state.ui.loginMode = "signup"; save(); renderLogin(); };
-    document.getElementById("authBtn").onclick = () => {
-      const username = document.getElementById("userInput").value.trim();
-      const password = document.getElementById("passInput").value;
-      if(!username || !password) return showToast("Please enter user ID and password");
-      if(state.ui.loginMode === "signup"){
-        if(state.users[username]) return showToast("This user ID already exists");
-        state.users[username] = { username, password };
-        state.session = { username };
-        save();
-        showToast("Login created");
-        renderApp();
-      }else{
-        const existing = state.users[username];
-        if(!existing || existing.password !== password) return showToast("Invalid login");
-        state.session = { username };
-        save();
-        showToast("Welcome back");
-        renderApp();
-      }
-    };
+/* ============================================================
+   TAB 2: BA EARNINGS
+   ============================================================ */
+function initBAForm(){
+  const sel = document.getElementById('baDesig');
+  DESIGNATIONS.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; sel.appendChild(o); });
+  const mbgSel = document.getElementById('mbgDesig');
+  DESIGNATIONS.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; mbgSel.appendChild(o); });
+
+  document.getElementById('baPersistencyBucket').addEventListener('change', (e)=>{
+    document.getElementById('persistencySlabWrap').style.display = e.target.value==='yes' ? 'block':'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', initBAForm);
+
+function calcBA(){
+  const desig = document.getElementById('baDesig').value;
+  const vintage = parseInt(document.getElementById('baVintage').value)||0;
+  const hasPersistency = document.getElementById('baPersistencyBucket').value === 'yes';
+  const persistencyMult = hasPersistency ? parseInt(document.getElementById('baPersistencySlab').value) : 100;
+  const dtWrp = parseFloat(document.getElementById('baDtWrp').value)||0;
+  const dtAdvBucket = document.getElementById('baDtAdv').value;
+  const fycPct = parseFloat(document.getElementById('baFycPct').value)||0;
+  const l1 = parseFloat(document.getElementById('baL1').value)||0;
+  const l2 = parseFloat(document.getElementById('baL2').value)||0;
+  const l3 = parseFloat(document.getElementById('baL3').value)||0;
+  const l1Active = document.getElementById('baL1Active').value;
+  const roll12DT = parseFloat(document.getElementById('baRoll12DT').value)||0;
+  const roll12TT = parseFloat(document.getElementById('baRoll12TT').value)||0;
+  const gateAgents = parseInt(document.getElementById('baGateAgents').value)||0;
+  const gateFPA = parseInt(document.getElementById('baGateFPA').value)||0;
+  const fpaLte = parseInt(document.getElementById('baFpaLte').value)||0;
+  const sfpaLte = parseInt(document.getElementById('baSfpaLte').value)||0;
+  const fpaGt = parseInt(document.getElementById('baFpaGt').value)||0;
+  const laSlab = document.getElementById('baLaSlab').value;
+
+  const trail = []; // audit lines
+
+  /* ---- 1. Salary + BDA ---- */
+  const [salary, bdaAmt, bdaGate] = BDA_TABLE[desig];
+  let bdaEarned = 0, bdaStatus = "";
+  if (vintage <= 1){
+    // M0-M1: paid if 3 ARF + 2 License met by M3 — approximated via gateAgents/gateFPA proxy inputs not collected separately;
+    // use conservative rule: not evaluated here, show as N/A pending M2 productivity data.
+    bdaStatus = "M0–M1 BA: BDA of " + inr(bdaAmt) + " per month accrues if 3 ARF + 2 License target is met by M3 (see BDA reference table).";
+    bdaEarned = 0;
+  } else {
+    if (dtWrp >= bdaGate){ bdaEarned = bdaAmt; bdaStatus = `Productivity gate met (DT WRP ${inr(dtWrp)} ≥ gate ${inr(bdaGate)}).`; }
+    else { bdaEarned = 0; bdaStatus = `Productivity gate NOT met (DT WRP ${inr(dtWrp)} < gate ${inr(bdaGate)}) — BDA forfeited for the month.`; }
   }
+  trail.push(`Salary (fixed): ${inr(salary)}/month for ${desig}.`);
+  trail.push(`BDA gate (Productivity DT WRP): ${inr(bdaGate)}. ${bdaStatus}`);
 
-  function sectionButton(id, label, sub){
-    return `
-      <button class="collapser ${state.ui[id] ? "" : "collapsed"}" data-toggle="${id}">
-        <div>
-          ${label}
-          ${sub ? `<small>${sub}</small>` : ""}
-        </div>
-        <div class="caret">▾</div>
-      </button>
-      <div class="collapse-body ${state.ui[id] ? "" : "hidden"}" data-body="${id}">
-    `;
+  /* ---- 2. Commission on DT WRP ---- */
+  const dtCommission = dtWrp * fycPct/100;
+  trail.push(`Commission on DT WRP: ${inr(dtWrp)} × ${fycPct}% FYC = ${inr(dtCommission)}.`);
+
+  /* ---- 3. MPB DT ---- */
+  const dtSlab = findSlab(MPB_DT_SLABS, dtWrp);
+  let dtPct;
+  if (dtAdvBucket === "2") dtPct = dtSlab.adv2;
+  else if (dtAdvBucket === "3") dtPct = dtSlab.adv3;
+  else dtPct = (vintage <= 6) ? dtSlab.m0m6_0to1 : dtSlab.m7_0to1;
+  let mpbDtRaw = dtCommission * dtPct/100;
+  let mpbDtAfterMult = mpbDtRaw * persistencyMult/100;
+  let mpbDtCurrent = mpbDtAfterMult, mpbDtHeld = 0;
+  if (!hasPersistency){ mpbDtCurrent = mpbDtAfterMult * 0.90; mpbDtHeld = mpbDtAfterMult * 0.10; }
+  trail.push(`MPB DT slab: "${dtSlab.label}" → payout % = ${dtPct}% of DT commission (advisor bucket: ${dtAdvBucket==='0to1'?'0–1 advisors, vintage '+(vintage<=6?'M0–M6':'≥M7'):dtAdvBucket+' advisors'}).`);
+  trail.push(`MPB DT before multiplier: ${inr(dtCommission)} × ${dtPct}% = ${inr(mpbDtRaw)}.`);
+  trail.push(`Persistency multiplier applied: ${persistencyMult}% → ${inr(mpbDtAfterMult)}.`);
+  if (!hasPersistency) trail.push(`No 13m persistency bucket yet: 90% paid now (${inr(mpbDtCurrent)}), 10% held for 13th-month cycle (${inr(mpbDtHeld)}), subject to conditions.`);
+
+  /* ---- 4. MPB IDT (L1/L2/L3) ---- */
+  const eligibleLevels = IDT_ELIGIBILITY[desig];
+  function levelPayout(wrp, levelKey){
+    if (!eligibleLevels.includes(levelKey) || wrp<=0) return {payout:0, slabLabel:"—", pctUsed:0, commission:0};
+    const slab = findSlab(MPB_IDT_SLABS, wrp);
+    const pctUsed = slab[levelKey];
+    const commission = wrp * fycPct/100;
+    const payout = commission * pctUsed/100;
+    return {payout, slabLabel:slab.label, pctUsed, commission};
   }
+  const l1r = levelPayout(l1,"L1"), l2r = levelPayout(l2,"L2"), l3r = levelPayout(l3,"L3");
+  const idtSubtotal = l1r.payout + l2r.payout + l3r.payout;
+  const baActiveMult = l1Active==="2" ? 110 : (l1Active==="1" ? 100 : 90);
+  let mpbIdtAfterMult = idtSubtotal * baActiveMult/100;
+  let mpbIdtCurrent = mpbIdtAfterMult, mpbIdtHeld = 0;
+  mpbIdtAfterMult = mpbIdtAfterMult * persistencyMult/100;
+  if (!hasPersistency){ mpbIdtCurrent = mpbIdtAfterMult * 0.90; mpbIdtHeld = mpbIdtAfterMult * 0.10; } else { mpbIdtCurrent = mpbIdtAfterMult; }
+  trail.push(`MPB IDT eligibility for ${desig}: ${eligibleLevels.length? eligibleLevels.join(", "):"not eligible (BA level)"}.`);
+  if (eligibleLevels.includes("L1")) trail.push(`L1: WRP ${inr(l1)} in slab "${l1r.slabLabel}" → ${l1r.pctUsed}% of ${inr(l1r.commission)} = ${inr(l1r.payout)}.`);
+  if (eligibleLevels.includes("L2")) trail.push(`L2: WRP ${inr(l2)} in slab "${l2r.slabLabel}" → ${l2r.pctUsed}% of ${inr(l2r.commission)} = ${inr(l2r.payout)}.`);
+  if (eligibleLevels.includes("L3")) trail.push(`L3: WRP ${inr(l3)} in slab "${l3r.slabLabel}" → ${l3r.pctUsed}% of ${inr(l3r.commission)} = ${inr(l3r.payout)}.`);
+  trail.push(`IDT subtotal (L1+L2+L3): ${inr(idtSubtotal)}. L1 BA Active multiplier: ${baActiveMult}% → ${inr(idtSubtotal*baActiveMult/100)}. Persistency multiplier: ${persistencyMult}% → ${inr(mpbIdtAfterMult)}.`);
 
-  function closeSection(){
-    return `</div>`;
+  /* ---- 5. Consistency Bonus ---- */
+  const distGateMet = (gateAgents>=3 && gateFPA>=1);
+  let consSlabDT = null, consSlabTT = null;
+  for (const s of CONSISTENCY_SLABS){ if (roll12DT >= s.dt) consSlabDT = s; }
+  for (const s of CONSISTENCY_SLABS){ if (desig!=="BA" && roll12TT >= s.tt) consSlabTT = s; }
+  let consAmount = 0, consBasis = "None met";
+  if (consSlabDT || consSlabTT){
+    const dtAmt = consSlabDT ? consSlabDT.amount : 0;
+    const ttAmt = consSlabTT ? consSlabTT.amount : 0;
+    consAmount = Math.max(dtAmt, ttAmt);
+    consBasis = ttAmt > dtAmt ? `Total Team WRP slab (higher payout)` : `Direct Team WRP slab`;
   }
+  const consPaid = distGateMet ? consAmount : 0;
+  const consAccrued = (!distGateMet && consAmount>0) ? consAmount : 0;
+  trail.push(`Consistency Bonus: Rolling 12M DT WRP ${inr(roll12DT)} → slab ${consSlabDT?inr(consSlabDT.dt):'none'} (${consSlabDT?inr(consSlabDT.amount):'—'}/month). Rolling 12M Total Team WRP ${inr(roll12TT)} → slab ${consSlabTT?inr(consSlabTT.tt):'none'} (${consSlabTT?inr(consSlabTT.amount):'—'}/month). Higher of the two applies: ${inr(consAmount)} (${consBasis}).`);
+  trail.push(`Distribution gate (3 agents in DT + 1 FPA in DT): ${distGateMet? 'MET':'NOT MET'} (agents=${gateAgents}, FPA=${gateFPA}). ${distGateMet? 'Bonus payable.':'Bonus accrues, paid once gate is met within FY27.'}`);
 
-  function renderApp(){
-    const u = user();
-    if(!u){ renderLogin(); return; }
+  /* ---- 6. DBB ---- */
+  const fpaCreationBonus = (fpaLte*7500) + (sfpaLte*10000) + (fpaGt*5000);
+  const laBonus = LA_SLABS[laSlab] || 0;
+  const laApplicable = vintage <= 6;
+  const laBonusFinal = laApplicable ? laBonus : 0;
+  trail.push(`FPA Creation Bonus: (${fpaLte} FPA ≤M3 × ₹7,500) + (${sfpaLte} SFPA+ ≤M3 × ₹10,000) + (${fpaGt} FPA >M3 × ₹5,000) = ${inr(fpaCreationBonus)}.`);
+  trail.push(`License Active Bonus: ${laApplicable ? `slab reached "${laSlab} LA" → ${inr(laBonus)} (M0–M6 vintage only; cumulative differential payout).` : `not applicable — BA vintage (${vintage}m) is beyond M6.`}`);
 
-    const c = counts();
-    const active = activeRecord();
-    const raw = rawActive();
-    const list = filteredRecords();
-    const total = state.records.length || 1;
-    const completed = state.records.filter(r => (r.status || "Pending") !== "Pending").length;
-    const prog = progress();
+  /* ---- TOTALS ---- */
+  const totalCurrentPayout = salary + bdaEarned + mpbDtCurrent + mpbIdtCurrent + consPaid + fpaCreationBonus + laBonusFinal;
+  const totalAccruedHeld = mpbDtHeld + mpbIdtHeld + consAccrued;
+  const annualized = totalCurrentPayout * 12;
 
-    const activeStatus = raw ? (raw.status || "Pending") : "No records";
-    const statusClass =
-      activeStatus === "Interested" ? "b-interest" :
-      activeStatus === "Callback" ? "b-callback" :
-      activeStatus === "Not Interested" || activeStatus === "Wrong Number" || activeStatus === "No Answer" ? "b-no" :
-      activeStatus === "Busy" ? "b-busy" :
-      activeStatus === "Dropped" ? "b-dropped" :
-      "b-pending";
+  document.getElementById('baResult').innerHTML = `
+    <div class="result-box">
+      <div class="result-row"><span class="k">Designation</span><span class="v">${desig}</span></div>
+      <div class="result-row"><span class="k">Vintage</span><span class="v">${vintage} months (${vintage<=1?'M0–M1':vintage<=6?'M2–M6':'≥M7'})</span></div>
+      <div class="result-row"><span class="k">Fixed Salary</span><span class="v">${inr(salary)}</span></div>
+      <div class="result-row"><span class="k">BDA</span><span class="v">${inr(bdaEarned)}</span></div>
+      <div class="result-row"><span class="k">MPB DT (paid now)</span><span class="v">${inr(mpbDtCurrent)}</span></div>
+      <div class="result-row"><span class="k">MPB IDT (paid now)</span><span class="v">${inr(mpbIdtCurrent)}</span></div>
+      <div class="result-row"><span class="k">Consistency Bonus (paid now)</span><span class="v">${inr(consPaid)}</span></div>
+      <div class="result-row"><span class="k">Distribution Building Bonus (FPA + LA)</span><span class="v">${inr(fpaCreationBonus + laBonusFinal)}</span></div>
+      <div class="result-row"><span class="k">Held/Accrued (13th-month cycle or gate pending)</span><span class="v">${inr(totalAccruedHeld)}</span></div>
+    </div>
+    <div class="total-big">
+      <div><div class="lbl">Total Payable This Month</div></div>
+      <div class="amt">${inr(totalCurrentPayout)}</div>
+    </div>
+    <div class="result-box" style="margin-top:10px;">
+      <div class="result-row"><span class="k">Annualised (×12, illustrative)</span><span class="v">${inr(annualized)}</span></div>
+    </div>
+    <details open><summary>View Calculation Details (Audit Trail)</summary>
+      <div class="content">
+        <div class="trail">${trail.map(t=>`<div>${t}</div>`).join("")}</div>
+      </div>
+    </details>
+    <div class="source-tag">Source: BA Proposition — Hiring, Earnings, Progression, MBG (Quarterly Design FY27 Q1, effective 1 May 2026).</div>
+  `;
+}
 
-    const hideClass = [
-      state.ui.focusMode ? "focus-mode" : "",
-      state.ui.queueOpen ? "" : "queue-hide",
-      state.ui.dashboardOpen ? "" : "stats-hide",
-      state.ui.mappingOpen ? "" : "mapping-hide",
-      state.ui.recordsOpen ? "" : "records-hide"
-    ].filter(Boolean).join(" ");
+/* ============================================================
+   TAB 3: MBG
+   ============================================================ */
+function calcMBG(){
+  const desig = document.getElementById('mbgDesig').value;
+  const dt = parseFloat(document.getElementById('mbgDT').value)||0;
+  const idt = parseFloat(document.getElementById('mbgIDT').value)||0;
+  const advSize = parseInt(document.getElementById('mbgAdvSize').value)||0;
 
-    app.innerHTML = `
-      <div class="${hideClass}">
-        <div class="wrap">
-          <div class="glass topbar">
-            <div class="brand">
-              <div class="logo">☎</div>
-              <div class="brand-text">
-                <div class="title">Call Desk CRM</div>
-                <div class="sub">Logged in as <b>${esc(u.username)}</b> · GitHub Pages friendly · mobile first</div>
-              </div>
-            </div>
-            <div class="toolbar">
-              <span class="chip">Saved in browser</span>
-              <button class="btn dark small" id="logoutBtn">Logout</button>
-            </div>
-          </div>
+  const rule = MBG[desig];
+  const dtMet = dt >= rule.dt;
+  const idtMet = rule.idt!==null ? idt >= rule.idt : null;
+  const orMet = dtMet || (idtMet===true);
+  const advMet = advSize >= rule.adv;
+  const overallMet = orMet && advMet;
 
-          <div class="layout">
-            <aside class="glass panel sidebar">
-              <div class="section">
-                <div class="section-title">
-                  <span>Quick controls</span>
-                  <span class="mini">hide what you do not need</span>
-                </div>
-                <div class="toggle-row">
-                  <button class="toggle ${state.ui.focusMode ? "on":""}" id="focusToggle">Focus mode</button>
-                  <button class="toggle ${state.ui.dashboardOpen ? "on":""}" id="dashToggle">Dashboard</button>
-                  <button class="toggle ${state.ui.queueOpen ? "on":""}" id="queueToggle">Queue</button>
-                  <button class="toggle ${state.ui.mappingOpen ? "on":""}" id="mapToggle">Mapping</button>
-                  <button class="toggle ${state.ui.recordsOpen ? "on":""}" id="recordsToggle">Table</button>
-                </div>
-              </div>
-
-              ${sectionButton("dashboardOpen", "Dashboard", "overall call count, progress, and outcome stats")}
-                <div class="dashboard-panel">
-                  <div class="stat-grid">
-                    <div class="stat"><div class="n">${c.total}</div><div class="l">Total records</div></div>
-                    <div class="stat"><div class="n">${c.pending}</div><div class="l">Pending</div></div>
-                    <div class="stat"><div class="n">${c.interested}</div><div class="l">Interested</div></div>
-                    <div class="stat"><div class="n">${c.callback}</div><div class="l">Callback</div></div>
-                    <div class="stat"><div class="n">${c.no}</div><div class="l">Not interested</div></div>
-                    <div class="stat"><div class="n">${c.dropped}</div><div class="l">Dropped</div></div>
-                  </div>
-                  <div class="label">Progress</div>
-                  <div class="progress"><div class="bar" style="width:${prog}%"></div></div>
-                  <div class="split" style="margin-top:8px">
-                    <div class="mini">${completed}/${total} completed</div>
-                    <div class="mini">${prog}%</div>
-                  </div>
-                </div>
-              ${closeSection()}
-
-              ${sectionButton("mappingOpen", "Upload & mapping", "CSV/XLSX import up to 20 MB")}
-                <div class="mapping-panel">
-                  <div class="notice">
-                    Upload your file, then map the columns to the fields below. The imported data can be applied or appended to the existing list.
-                  </div>
-                  <div class="label">Upload file</div>
-                  <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
-                  <div class="toolbar" style="margin-top:10px">
-                    <button class="btn dark small" id="sampleBtn">Load sample</button>
-                    <button class="btn dark small" id="clearBtn">Clear data</button>
-                  </div>
-                  <div id="mappingBox" style="margin-top:12px"></div>
-                </div>
-              ${closeSection()}
-
-              <div class="section">
-                <div class="section-title"><span>Search & filter</span></div>
-                <div class="label">Search any field</div>
-                <input id="searchBox" type="text" placeholder="Search by name, number, address..." value="${esc(state.ui.search)}" />
-                <div class="label">Status filter</div>
-                <select id="statusFilter">
-                  <option ${state.ui.statusFilter === "All" ? "selected" : ""}>All</option>
-                  ${STATUS_OPTIONS.map(s => `<option ${state.ui.statusFilter === s ? "selected" : ""}>${esc(s)}</option>`).join("")}
-                </select>
-              </div>
-
-              <div class="section">
-                <div class="section-title"><span>Queue movement</span></div>
-                <div class="toolbar">
-                  <button class="btn dark small" id="prevBtn">⟵ Prev</button>
-                  <button class="btn dark small" id="nextBtn">Next ⟶</button>
-                </div>
-              </div>
-
-              <div class="section">
-                <div class="section-title"><span>Reports</span></div>
-                <div class="toolbar">
-                  <button class="btn primary small" id="csvBtn">Download CSV</button>
-                  <button class="btn blue small" id="xlsxBtn">Download XLSX</button>
-                </div>
-              </div>
-            </aside>
-
-            <main class="glass panel call-panel">
-              ${sectionButton("dashboardOpen", "Calling screen", "large touch buttons, bigger font, and quick status tabs")}
-                <div class="call-card">
-                  ${raw ? `
-                    <div class="split">
-                      <div>
-                        <div class="mini">Current record</div>
-                        <div class="name">${esc(raw.name || "Unnamed")}</div>
-                      </div>
-                      <span class="badge ${statusClass}">${esc(activeStatus)}</span>
-                    </div>
-
-                    <a class="phone" href="tel:${esc(raw.mobile || "")}" id="callLink">📞 ${esc(raw.mobile || "No mobile number")}</a>
-
-                    <div class="pill-row">
-                      <span class="chip"><strong>Alt:</strong> ${esc(raw.alt || "—")}</span>
-                      <span class="chip"><strong>Row:</strong> ${active ? active.__index + 1 : "-"}</span>
-                      <span class="chip"><strong>Saved:</strong> ${raw.updatedAt ? "Yes" : "No"}</span>
-                    </div>
-
-                    <div class="data">
-                      <div class="kv"><div class="k">Mobile number</div><div class="v">${esc(raw.mobile || "—")}</div></div>
-                      <div class="kv"><div class="k">Alternate number</div><div class="v">${esc(raw.alt || "—")}</div></div>
-                      <div class="kv full"><div class="k">Address</div><div class="v">${esc(raw.address || "—")}</div></div>
-                      <div class="kv"><div class="k">Current status</div><div class="v">${esc(raw.status || "Pending")}</div></div>
-                      <div class="kv"><div class="k">Remarks</div><div class="v">${esc(raw.remarks || "—")}</div></div>
-                    </div>
-
-                    <div class="actions">
-                      <button class="btn green" id="callBtn">📞 Call</button>
-                      <button class="btn blue" id="waBtn">💬 WhatsApp</button>
-                      <button class="btn red" id="finishBtn">✖ Finish Call</button>
-                      <button class="btn dark" id="saveBtn">💾 Save</button>
-                    </div>
-
-                    <div class="label">Quick status tabs</div>
-                    <div class="tabs" id="statusTabs">
-                      ${STATUS_OPTIONS.map(s => `<div class="tab ${s === (raw.status || "Pending") ? "active" : ""}" data-status="${esc(s)}">${esc(s)}</div>`).join("")}
-                    </div>
-
-                    <div class="label">Remarks</div>
-                    <textarea id="remarksBox" placeholder="Type customer remarks here...">${esc(raw.remarks || "")}</textarea>
-
-                    <div class="sticky-actions">
-                      <div class="toolbar">
-                        <button class="btn primary full" id="saveNextBtn">Save & Next</button>
-                      </div>
-                    </div>
-                  ` : `
-                    <div class="notice danger">
-                      No record available. Upload a file, load sample data, or clear the filters to continue.
-                    </div>
-                  `}
-                </div>
-              ${closeSection()}
-
-              ${sectionButton("recordsOpen", "Records table", "full list with open button and report-friendly view")}
-                <div class="records-panel">
-                  <div class="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>#</th><th>Name</th><th>Mobile</th><th>Alt</th><th>Address</th><th>Status</th><th>Remarks</th><th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        ${list.map((r, idx) => `
-                          <tr>
-                            <td>${idx + 1}</td>
-                            <td>${esc(r.name || "")}</td>
-                            <td>${esc(r.mobile || "")}</td>
-                            <td>${esc(r.alt || "")}</td>
-                            <td>${esc(r.address || "")}</td>
-                            <td>${esc(r.status || "Pending")}</td>
-                            <td>${esc(r.remarks || "")}</td>
-                            <td><button class="btn dark small rowOpen" data-i="${idx}">Open</button></td>
-                          </tr>
-                        `).join("")}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ${closeSection()}
-            </main>
-
-            <aside class="glass panel queue-panel">
-              ${sectionButton("queueOpen", "Queue", "tap any row to open and call")}
-                <div class="queue-panel">
-                  <div class="mini" style="margin-bottom:10px">
-                    The active record stays where you left it unless you move to the next one.
-                  </div>
-                  <div class="list" id="queueList">
-                    ${list.map((r, idx) => `
-                      <div class="record ${idx === state.ui.currentIndex ? "active" : ""}" data-i="${idx}">
-                        <div>
-                          <div class="nm">${esc(r.name || "Unnamed")}</div>
-                          <div class="ph">${esc(r.mobile || "")}</div>
-                          <div class="ph">${esc(r.address || "")}</div>
-                        </div>
-                        <div style="text-align:right">
-                          <span class="badge">${esc(r.status || "Pending")}</span>
-                        </div>
-                      </div>
-                    `).join("")}
-                  </div>
-                </div>
-              ${closeSection()}
-
-              <div class="section">
-                <div class="section-title"><span>How it runs</span></div>
-                <div class="mini">
-                  1. Login<br>
-                  2. Upload file<br>
-                  3. Map columns<br>
-                  4. Call / WhatsApp<br>
-                  5. Save status and remarks<br>
-                  6. Move to next record<br>
-                  7. Download report
-                </div>
-              </div>
-
-              <div class="section">
-                <div class="section-title"><span>Mobile tips</span></div>
-                <div class="mini">
-                  Use focus mode to hide panels. On small screens, buttons are bigger and sections stack in one column automatically.
-                </div>
-              </div>
-            </aside>
-          </div>
-        </div>
-
-        <div class="bottom-nav">
-          <div class="bar">
-            <button class="navbtn ${state.ui.activeNav === "call" ? "active" : ""}" data-nav="call"><span>☎</span>Call</button>
-            <button class="navbtn ${state.ui.activeNav === "queue" ? "active" : ""}" data-nav="queue"><span>☰</span>Queue</button>
-            <button class="navbtn ${state.ui.activeNav === "report" ? "active" : ""}" data-nav="report"><span>⬇</span>Report</button>
-            <button class="navbtn ${state.ui.activeNav === "settings" ? "active" : ""}" data-nav="settings"><span>⚙</span>Settings</button>
-          </div>
+  let html = `
+    <div class="result-box">
+      <div class="result-row"><span class="k">Designation</span><span class="v">${desig}</span></div>
+      <div class="result-row"><span class="k">Direct Team WRP requirement</span><span class="v">${inr(rule.dt)} ${dtMet?'<span class="badge good">MET</span>':'<span class="badge bad">NOT MET</span>'}</span></div>
+      <div class="result-row"><span class="k">Indirect Team WRP requirement</span><span class="v">${rule.idt!==null? inr(rule.idt)+' '+(idtMet?'<span class="badge good">MET</span>':'<span class="badge bad">NOT MET</span>') : 'Not applicable for BA'}</span></div>
+      <div class="result-row"><span class="k">DT Advisor Team Size requirement</span><span class="v">${rule.adv} adv ${advMet?'<span class="badge good">MET</span>':'<span class="badge bad">NOT MET</span>'}</span></div>
+    </div>
+    <div class="total-big" style="background:${overallMet?'linear-gradient(120deg,#1E8E5A,#166b45)':'linear-gradient(120deg,#C0392B,#8e2a1f)'};">
+      <div><div class="lbl">MBG Status (Rolling 6 Months)</div></div>
+      <div class="amt">${overallMet ? 'MBG MET ✓' : 'MBG NOT MET'}</div>
+    </div>
+    <details open><summary>View Calculation Details</summary>
+      <div class="content">
+        <div class="trail">
+          <div>Rule: (Direct Team WRP ≥ ${inr(rule.dt)} <b>OR</b> Indirect Team WRP ≥ ${rule.idt!==null?inr(rule.idt):'N/A'}) <b>AND</b> DT advisor team size ≥ ${rule.adv}.</div>
+          <div>Direct Team WRP entered: ${inr(dt)} → ${dtMet?'meets':'does not meet'} requirement.</div>
+          <div>Indirect Team WRP entered: ${inr(idt)} → ${rule.idt!==null ? (idtMet?'meets':'does not meet')+' requirement' : 'not applicable for this designation'}.</div>
+          <div>DT Advisor Team Size entered: ${advSize} → ${advMet?'meets':'does not meet'} requirement of ${rule.adv}.</div>
+          <div>${overallMet? 'All applicable MBG conditions are satisfied for this rolling 6-month period.' : 'Grace period runs till the 2nd month-end of the current running quarter. If still not met after grace, a termination letter is issued (final call rests with management).'}</div>
         </div>
       </div>
-    `;
+    </details>
+    <div class="source-tag">Source: BA MBG — Minimum Business Guarantee, MBG Criteria (Rolling 6 months).</div>
+  `;
+  document.getElementById('mbgResult').innerHTML = html;
+}
 
-    bindApp();
-    renderMappingBox();
-    routeNav();
-  }
+/* ============================================================
+   TAB 4: REFERENCE TABLES
+   ============================================================ */
+function renderReference(){
+  let h = '<tr><th>From → To</th><th>Total Team Increment</th><th>WRP Criteria</th><th>Persistency</th><th>DT Gate</th><th>Training Points</th></tr>';
+  PROGRESSION.forEach(p=>{
+    h += `<tr><td>${p.from} → ${p.to}</td><td>${p.dtAdv}</td><td>${p.wrp}</td><td>${p.persistency}</td><td>${p.dtGate}</td><td>${p.training}</td></tr>`;
+  });
+  document.getElementById('refProgression').innerHTML = h;
 
-  function renderMappingBox(){
-    const box = document.getElementById("mappingBox");
-    if(!box) return;
+  h = '<tr><th>DT WRP Target</th><th>Total Team WRP Target (SBA+)</th><th>Amount / Month</th><th>Monthly Gate</th></tr>';
+  CONSISTENCY_SLABS.forEach(s=>{ h += `<tr><td>${inr(s.dt)}</td><td>${inr(s.tt)}</td><td>${inr(s.amount)}</td><td>${s.gate}</td></tr>`; });
+  document.getElementById('refConsistency').innerHTML = h;
 
-    if(!state.ui.parsedRows.length){
-      box.innerHTML = `
-        <div class="notice" style="margin-top:12px">
-          No file uploaded yet. After upload, columns will appear here for mapping.
-        </div>
-      `;
-      return;
-    }
+  h = '<tr><th>Direct WRP Slab</th><th>0–1 adv (M0–M6)</th><th>0–1 adv (≥M7)</th><th>2 adv</th><th>≥3 adv</th></tr>';
+  MPB_DT_SLABS.forEach(s=>{ h += `<tr><td>${s.label}</td><td>${s.m0m6_0to1}%</td><td>${s.m7_0to1}%</td><td>${s.adv2}%</td><td>${s.adv3}%</td></tr>`; });
+  document.getElementById('refMpbDt').innerHTML = h;
 
-    const headers = state.ui.headers || [];
-    const select = (field, label) => `
-      <div>
-        <div class="label">${label}</div>
-        <select data-map="${field}">
-          <option value="">-- Select column --</option>
-          ${headers.map(h => `<option value="${esc(h)}" ${state.ui.columnMap[field] === h ? "selected" : ""}>${esc(h)}</option>`).join("")}
-        </select>
-      </div>
-    `;
+  h = '<tr><th>Indirect WRP Slab</th><th>L1</th><th>L2</th><th>L3</th></tr>';
+  MPB_IDT_SLABS.forEach(s=>{ h += `<tr><td>${s.label}</td><td>${s.L1}%</td><td>${s.L2}%</td><td>${s.L3}%</td></tr>`; });
+  document.getElementById('refMpbIdt').innerHTML = h;
 
-    box.innerHTML = `
-      <div class="row two">
-        ${select("name","Name")}
-        ${select("mobile","Mobile")}
-        ${select("alt","Alternate")}
-        ${select("address","Address")}
-        ${select("status","Status")}
-        ${select("remarks","Remarks")}
-      </div>
-      <div class="toolbar" style="margin-top:12px">
-        <button class="btn primary small" id="applyMapBtn">Apply mapping</button>
-        <button class="btn dark small" id="appendBtn">Append rows</button>
-        <button class="btn dark small" id="autoMapBtn">Auto detect</button>
-      </div>
-      <div class="notice" style="margin-top:12px">
-        The imported rows are kept inside this browser until you clear them. After mapping, the app can use them as the calling list.
-      </div>
-    `;
-
-    box.querySelectorAll("select[data-map]").forEach(sel => {
-      sel.onchange = () => {
-        state.ui.columnMap[sel.dataset.map] = sel.value;
-        save();
-      };
-    });
-
-    document.getElementById("applyMapBtn").onclick = () => {
-      const mapped = mappedRows();
-      if(!mapped.length) return showToast("Nothing mapped yet");
-      state.records = mapped;
-      state.ui.currentIndex = 0;
-      save();
-      renderApp();
-      showToast(`Mapped ${mapped.length} rows`);
-    };
-
-    document.getElementById("appendBtn").onclick = () => {
-      const mapped = mappedRows();
-      if(!mapped.length) return showToast("Nothing mapped yet");
-      state.records = [...state.records, ...mapped];
-      state.ui.currentIndex = 0;
-      save();
-      renderApp();
-      showToast(`Appended ${mapped.length} rows`);
-    };
-
-    document.getElementById("autoMapBtn").onclick = () => {
-      applyAutoDetect();
-      renderMappingBox();
-      showToast("Auto mapping applied");
-    };
-  }
-
-  function bindApp(){
-    const logoutBtn = document.getElementById("logoutBtn");
-    if(logoutBtn) logoutBtn.onclick = () => { state.session = null; save(); renderLogin(); };
-
-    const toggle = (id, key) => {
-      const el = document.getElementById(id);
-      if(el) el.onclick = () => {
-        state.ui[key] = !state.ui[key];
-        if(key === "focusMode" && state.ui.focusMode){
-          state.ui.dashboardOpen = false;
-          state.ui.queueOpen = false;
-          state.ui.mappingOpen = false;
-          state.ui.recordsOpen = false;
-        }
-        save();
-        renderApp();
-      };
-    };
-
-    toggle("focusToggle","focusMode");
-    toggle("dashToggle","dashboardOpen");
-    toggle("queueToggle","queueOpen");
-    toggle("mapToggle","mappingOpen");
-    toggle("recordsToggle","recordsOpen");
-
-    document.querySelectorAll(".collapser").forEach(btn => {
-      btn.onclick = () => {
-        const key = btn.dataset.toggle;
-        state.ui[key] = !state.ui[key];
-        save();
-        renderApp();
-      };
-    });
-
-    const fileInput = document.getElementById("fileInput");
-    if(fileInput) fileInput.onchange = handleUpload;
-
-    const sampleBtn = document.getElementById("sampleBtn");
-    if(sampleBtn) sampleBtn.onclick = () => {
-      state.records = [
-        { name:"Amit Sharma", mobile:"9999994169", alt:"8888881111", address:"Delhi", status:"Pending", remarks:"Warm lead" },
-        { name:"Neha Verma", mobile:"9876543210", alt:"", address:"Noida", status:"Callback", remarks:"Call evening" },
-        { name:"Rahul Singh", mobile:"9123456780", alt:"9012345678", address:"Ghaziabad", status:"Interested", remarks:"Interested in plan" }
-      ];
-      state.ui.currentIndex = 0;
-      save();
-      renderApp();
-      showToast("Sample data loaded");
-    };
-
-    const clearBtn = document.getElementById("clearBtn");
-    if(clearBtn) clearBtn.onclick = () => {
-      if(confirm("Clear all data from this browser?")){
-        state.records = [];
-        state.ui.parsedRows = [];
-        state.ui.headers = [];
-        state.ui.columnMap = { name:"", mobile:"", alt:"", address:"", status:"", remarks:"" };
-        state.ui.currentIndex = 0;
-        save();
-        renderApp();
-        showToast("Data cleared");
-      }
-    };
-
-    const searchBox = document.getElementById("searchBox");
-    if(searchBox) searchBox.oninput = (e) => { state.ui.search = e.target.value; state.ui.currentIndex = 0; save(); renderApp(); };
-
-    const statusFilter = document.getElementById("statusFilter");
-    if(statusFilter) statusFilter.onchange = (e) => { state.ui.statusFilter = e.target.value; state.ui.currentIndex = 0; save(); renderApp(); };
-
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-    if(prevBtn) prevBtn.onclick = () => shiftIndex(-1);
-    if(nextBtn) nextBtn.onclick = () => shiftIndex(1);
-
-    const csvBtn = document.getElementById("csvBtn");
-    const xlsxBtn = document.getElementById("xlsxBtn");
-    if(csvBtn) csvBtn.onclick = downloadCSV;
-    if(xlsxBtn) xlsxBtn.onclick = downloadXLSX;
-
-    const callBtn = document.getElementById("callBtn");
-    const waBtn = document.getElementById("waBtn");
-    const finishBtn = document.getElementById("finishBtn");
-    const saveBtn = document.getElementById("saveBtn");
-    const saveNextBtn = document.getElementById("saveNextBtn");
-
-    if(callBtn) callBtn.onclick = callActive;
-    if(waBtn) waBtn.onclick = whatsappActive;
-    if(finishBtn) finishBtn.onclick = () => setStatus("Dropped", "Call finished or hung up");
-    if(saveBtn) saveBtn.onclick = saveCurrent;
-    if(saveNextBtn) saveNextBtn.onclick = () => { saveCurrent(true); };
-
-    document.querySelectorAll(".tab").forEach(tab => {
-      tab.onclick = () => {
-        const rec = rawActive();
-        if(!rec) return;
-        rec.status = tab.dataset.status;
-        rec.updatedAt = new Date().toISOString();
-        save();
-        renderApp();
-        showToast(`Status set to ${tab.dataset.status}`);
-      };
-    });
-
-    document.querySelectorAll(".record").forEach(row => {
-      row.onclick = () => {
-        state.ui.currentIndex = Number(row.dataset.i) || 0;
-        state.ui.activeNav = "call";
-        save();
-        renderApp();
-      };
-    });
-
-    document.querySelectorAll(".rowOpen").forEach(btn => {
-      btn.onclick = () => {
-        state.ui.currentIndex = Number(btn.dataset.i) || 0;
-        state.ui.activeNav = "call";
-        save();
-        renderApp();
-      };
-    });
-
-    document.querySelectorAll(".navbtn").forEach(btn => {
-      btn.onclick = () => setActiveNav(btn.dataset.nav);
-    });
-  }
-
-  function setStatus(status, remark=""){
-    const rec = rawActive();
-    if(!rec) return;
-    rec.status = status;
-    if(remark) rec.remarks = remark;
-    rec.updatedAt = new Date().toISOString();
-    save();
-    renderApp();
-  }
-
-  function callActive(){
-    const rec = rawActive();
-    if(!rec || !rec.mobile) return showToast("No mobile number found");
-    const tel = "tel:" + String(rec.mobile).replace(/\s+/g, "");
-    location.href = tel;
-    showToast("Opening dialer");
-  }
-
-  function whatsappActive(){
-    const rec = rawActive();
-    if(!rec || !rec.mobile) return showToast("No mobile number found");
-    const num = String(rec.mobile).replace(/\D/g,"");
-    const msg = encodeURIComponent("Hello! Thank you for your interest.");
-    window.open(`https://wa.me/91${num}?text=${msg}`, "_blank", "noopener");
-  }
-
-  function saveCurrent(next=false){
-    const rec = rawActive();
-    if(!rec) return;
-    const txt = document.getElementById("remarksBox");
-    if(txt) rec.remarks = txt.value;
-    rec.updatedAt = new Date().toISOString();
-    save();
-    showToast("Saved");
-    if(next) shiftIndex(1, true);
-    else renderApp();
-  }
-
-  function shiftIndex(delta, skipPending=false){
-    const list = filteredRecords();
-    if(!list.length) return;
-    if(skipPending){
-      for(let step = 0; step < list.length; step++){
-        const idx = (state.ui.currentIndex + delta + step + list.length) % list.length;
-        const rr = state.records[list[idx].__index];
-        if((rr.status || "Pending") === "Pending"){
-          state.ui.currentIndex = idx;
-          save();
-          renderApp();
-          return;
-        }
-      }
-    }
-    state.ui.currentIndex = (state.ui.currentIndex + delta + list.length) % list.length;
-    save();
-    renderApp();
-  }
-
-  function handleUpload(e){
-    const file = e.target.files && e.target.files[0];
-    if(!file) return;
-    if(file.size > 20 * 1024 * 1024){
-      e.target.value = "";
-      return showToast("File must be up to 20 MB");
-    }
-    const ext = file.name.toLowerCase().split(".").pop();
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try{
-        let rows = [];
-        if(ext === "csv"){
-          const wb = XLSX.read(ev.target.result, { type:"string" });
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          rows = XLSX.utils.sheet_to_json(sheet, { defval:"" });
-        }else{
-          const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
-          const sheet = wb.Sheets[wb.SheetNames[0]];
-          rows = XLSX.utils.sheet_to_json(sheet, { defval:"" });
-        }
-        state.ui.parsedRows = rows;
-        state.ui.headers = rows.length ? Object.keys(rows[0]) : [];
-        applyAutoDetect();
-        save();
-        renderApp();
-        showToast(`Uploaded ${rows.length} rows`);
-      }catch(err){
-        console.error(err);
-        showToast("Upload failed. Please check the file.");
-      }
-    };
-    if(ext === "csv") reader.readAsText(file);
-    else reader.readAsArrayBuffer(file);
-  }
-
-  function downloadCSV(){
-    if(!state.records.length) return showToast("No data to export");
-    const headers = ["name","mobile","alt","address","status","remarks","updatedAt"];
-    const csv = [headers.join(",")].concat(
-      state.records.map(r => headers.map(h => `"${String(r[h] ?? "").replace(/"/g,'""')}"`).join(","))
-    ).join("\n");
-    const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `call-desk-report-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showToast("CSV downloaded");
-  }
-
-  function downloadXLSX(){
-    if(!state.records.length) return showToast("No data to export");
-    const ws = XLSX.utils.json_to_sheet(state.records);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, `call-desk-report-${new Date().toISOString().slice(0,10)}.xlsx`);
-    showToast("XLSX downloaded");
-  }
-
-  function routeNav(){
-    const nav = state.ui.activeNav;
-    if(nav === "queue"){
-      const el = document.querySelector(".queue-panel");
-      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
-    }else if(nav === "report"){
-      const el = document.querySelector(".records-panel");
-      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
-    }else if(nav === "settings"){
-      const el = document.querySelector(".sidebar");
-      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
-    }else{
-      const el = document.querySelector(".call-panel");
-      if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
-    }
-  }
-
-  function render(){
-    if(!isLoggedIn()){
-      renderLogin();
-      return;
-    }
-    renderApp();
-  }
-
-  render();
-
-})();
+  h = '<tr><th>Designation</th><th>Salary</th><th>BDA</th><th>Productivity Gate (DT WRP)</th><th>Total Income</th></tr>';
+  DESIGNATIONS.forEach(d=>{ const r=BDA_TABLE[d]; h += `<tr><td>${d}</td><td>${inr(r[0])}</td><td>${inr(r[1])}</td><td>${inr(r[2])}</td><td>${inr(r[3])}</td></tr>`; });
+  document.getElementById('refBda').innerHTML = h;
+}
+document.addEventListener('DOMContentLoaded', renderReference);
 </script>
 </body>
 </html>
